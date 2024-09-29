@@ -10,8 +10,13 @@ export async function middleware(req: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession();
 
+  // Allow access to login page even when not authenticated
+  if (req.nextUrl.pathname === "/login") {
+    return res;
+  }
+
   if (!session && req.nextUrl.pathname.startsWith("/app")) {
-    return NextResponse.redirect(new URL("/", req.url));
+    return NextResponse.redirect(new URL("/login", req.url));
   }
 
   if (session && req.nextUrl.pathname === "/") {
@@ -22,5 +27,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/app"],
+  matcher: ["/", "/app", "/login"],
 };
