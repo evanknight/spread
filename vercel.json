@@ -1,6 +1,6 @@
 {
-    "buildCommand": "npm run build",
-    "outputDirectory": ".next",
-    "devCommand": "npm run dev",
-    "installCommand": "npm install"
-  }
+  "buildCommand": "cd nfl-picks-app && npm install && npm run build",
+  "outputDirectory": "nfl-picks-app/.next",
+  "devCommand": "cd nfl-picks-app && npm run dev",
+  "installCommand": "cd nfl-picks-app && npm install"
+}
