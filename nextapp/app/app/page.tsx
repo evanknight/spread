@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -58,59 +58,7 @@ export default function Home() {
 
   const router = useRouter();
 
-  useEffect(() => {
-    const savedTheme = localStorage.getItem("theme");
-    if (savedTheme === "dark") {
-      document.documentElement.classList.add("dark");
-      setIsDarkMode(true);
-    } else {
-      document.documentElement.classList.remove("dark");
-      setIsDarkMode(false);
-    }
-
-    checkUser();
-  }, []);
-
-  useEffect(() => {
-    async function fetchInitialData() {
-      setIsLoading(true);
-      await fetchGames();
-      await fetchUsers();
-      await fetchPicks();
-      setIsLoading(false);
-    }
-    if (currentUser) {
-      fetchInitialData();
-    }
-  }, [currentUser]);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      const now = new Date();
-      const firstGame = games[0];
-      if (!firstGame) return;
-
-      const gameStart = new Date(firstGame.commence_time);
-      const diff = gameStart.getTime() - now.getTime();
-
-      if (diff <= 0) {
-        setTimeRemaining("Picks are locked");
-        clearInterval(timer);
-      } else {
-        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-        const hours = Math.floor(
-          (diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
-        );
-        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-        setTimeRemaining(`${days}d ${hours}h ${minutes}m ${seconds}s`);
-      }
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [games]);
-
-  async function checkUser() {
+  const checkUser = useCallback(async () => {
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -119,12 +67,12 @@ export default function Home() {
     } else {
       router.push("/login");
     }
-  }
+  }, [router]);
 
-  async function fetchGames() {
+  const fetchGames = useCallback(async () => {
     try {
       console.log("Fetching games...");
-      let { data, error } = await supabase
+      const { data, error } = await supabase
         .from("games")
         .select(
           `
@@ -168,11 +116,9 @@ export default function Home() {
           throw allGamesResult.error;
         }
 
-        data = allGamesResult.data;
-        console.log("Fetched all games:", data);
-      }
+        const allGames = allGamesResult.data;
+        console.log("Fetched all games:", allGames);
 
-      if (data) {
         const currentDate = new Date();
         const startOfWeek = new Date(
           currentDate.setDate(currentDate.getDate() - currentDate.getDay() + 1)
@@ -181,7 +127,7 @@ export default function Home() {
           currentDate.setDate(currentDate.getDate() - currentDate.getDay() + 7)
         );
 
-        const filteredGames = data.filter((game) => {
+        const filteredGames = allGames.filter((game) => {
           const gameDate = new Date(game.commence_time);
           return gameDate >= startOfWeek && gameDate <= endOfWeek;
         });
@@ -189,33 +135,15 @@ export default function Home() {
         console.log("Filtered games for current week:", filteredGames);
         setGames(filteredGames);
       } else {
-        console.log("No games data returned from Supabase");
+        setGames(data);
       }
     } catch (err) {
       console.error("Error fetching games:", err);
       setError("Failed to fetch games");
     }
-  }
+  }, [currentWeek]);
 
-  async function fetchGamesFromAPI() {
-    try {
-      setIsLoading(true);
-      const response = await fetch("/api/update-games", { method: "POST" });
-      if (!response.ok) {
-        throw new Error("Failed to fetch games from API");
-      }
-      const result = await response.json();
-      console.log("API fetch result:", result);
-      await fetchGames();
-      setIsLoading(false);
-    } catch (err) {
-      console.error("Error fetching games from API:", err);
-      setError("Failed to fetch games from API");
-      setIsLoading(false);
-    }
-  }
-
-  async function fetchUsers() {
+  const fetchUsers = useCallback(async () => {
     try {
       const { data, error } = await supabase.from("users").select("*");
       if (error) throw error;
@@ -224,9 +152,9 @@ export default function Home() {
       console.error("Error fetching users:", err);
       setError("Failed to fetch users");
     }
-  }
+  }, []);
 
-  async function fetchPicks() {
+  const fetchPicks = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from("picks")
@@ -238,7 +166,59 @@ export default function Home() {
       console.error("Error fetching picks:", err);
       setError("Failed to fetch picks");
     }
-  }
+  }, [currentWeek]);
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme === "dark") {
+      document.documentElement.classList.add("dark");
+      setIsDarkMode(true);
+    } else {
+      document.documentElement.classList.remove("dark");
+      setIsDarkMode(false);
+    }
+
+    checkUser();
+  }, [checkUser]);
+
+  useEffect(() => {
+    async function fetchInitialData() {
+      setIsLoading(true);
+      await fetchGames();
+      await fetchUsers();
+      await fetchPicks();
+      setIsLoading(false);
+    }
+    if (currentUser) {
+      fetchInitialData();
+    }
+  }, [currentUser, fetchGames, fetchUsers, fetchPicks]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const now = new Date();
+      const firstGame = games[0];
+      if (!firstGame) return;
+
+      const gameStart = new Date(firstGame.commence_time);
+      const diff = gameStart.getTime() - now.getTime();
+
+      if (diff <= 0) {
+        setTimeRemaining("Picks are locked");
+        clearInterval(timer);
+      } else {
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor(
+          (diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+        );
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+        setTimeRemaining(`${days}d ${hours}h ${minutes}m ${seconds}s`);
+      }
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [games]);
 
   async function fetchCurrentUser(userId: string) {
     try {
@@ -296,8 +276,8 @@ export default function Home() {
     return `/assets/${simplifiedName}.png`;
   }
 
-  function calculatePotentialPoints(spread: number) {
-    return 10 + spread;
+  function calculatePotentialPoints(spread: number | undefined): number {
+    return 10 + (spread ?? 0);
   }
 
   async function makePick(gameId: number, teamId: number) {
@@ -312,14 +292,14 @@ export default function Home() {
       );
 
       if (existingPick) {
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from("picks")
           .update({ game_id: gameId, team_picked: teamId })
           .eq("id", existingPick.id);
 
         if (error) throw error;
       } else {
-        const { data, error } = await supabase.from("picks").insert({
+        const { error } = await supabase.from("picks").insert({
           user_id: currentUser.id,
           game_id: gameId,
           team_picked: teamId,
@@ -345,6 +325,23 @@ export default function Home() {
     } else {
       document.documentElement.classList.remove("dark");
       localStorage.setItem("theme", "light");
+    }
+  }
+
+  async function fetchGamesFromAPI() {
+    try {
+      setIsLoading(true);
+      const response = await fetch("/api/update-games", { method: "POST" });
+      if (!response.ok) {
+        throw new Error("Failed to fetch games from API");
+      }
+      await response.json();
+      await fetchGames();
+      setIsLoading(false);
+    } catch (err) {
+      console.error("Error fetching games from API:", err);
+      setError("Failed to fetch games from API");
+      setIsLoading(false);
     }
   }
 

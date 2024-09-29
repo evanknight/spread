@@ -79,20 +79,17 @@ export async function POST() {
       }
 
       // Upsert game
-      const { data: gameData, error: gameError } = await supabase
-        .from("games")
-        .upsert(
-          {
-            sport_key: sportKey,
-            commence_time: commenceTime,
-            home_team_id: homeTeamData.id,
-            away_team_id: awayTeamData.id,
-            home_spread: homeSpread,
-            away_spread: awaySpread,
-          },
-          { onConflict: "sport_key,commence_time,home_team_id,away_team_id" }
-        )
-        .select();
+      const { error: gameError } = await supabase.from("games").upsert(
+        {
+          sport_key: sportKey,
+          commence_time: commenceTime,
+          home_team_id: homeTeamData.id,
+          away_team_id: awayTeamData.id,
+          home_spread: homeSpread,
+          away_spread: awaySpread,
+        },
+        { onConflict: "sport_key,commence_time,home_team_id,away_team_id" }
+      );
 
       if (gameError) {
         console.error("Error upserting game:", gameError);
