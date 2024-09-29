@@ -27,7 +27,11 @@ export default function Login() {
       if (error) throw error;
       alert("Check your email for the login link!");
     } catch (error) {
-      setError(error.message);
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError("An unexpected error occurred");
+      }
     }
   };
 
@@ -43,14 +47,12 @@ export default function Login() {
       router.push("/");
       router.refresh();
     } catch (error) {
-      setError(error.message);
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError("An unexpected error occurred");
+      }
     }
-  };
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    router.push("/login");
-    router.refresh();
   };
 
   return (
