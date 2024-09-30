@@ -80,7 +80,7 @@ export default function Home() {
   const signOut = async () => {
     try {
       await supabase.auth.signOut();
-      window.location.href = `${getBaseUrl()}/login`;
+      window.location.href = "/login";
     } catch (err) {
       console.error("Error signing out:", err);
       setError("Failed to sign out");
