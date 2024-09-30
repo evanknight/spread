@@ -182,10 +182,15 @@ export const fetchGamesFromAPI = async (
     if (!response.ok) {
       throw new Error("Failed to fetch games from API");
     }
-    const games = await response.json();
+    const result = await response.json();
+
+    if (!Array.isArray(result)) {
+      console.error("API response is not an array:", result);
+      throw new Error("Invalid response format from API");
+    }
 
     // Calculate and set the week for each game
-    const updatedGames = games.map((game: Game) => {
+    const updatedGames = result.map((game: Game) => {
       const gameDate = new Date(game.commence_time);
       const week = calculateNFLWeek(gameDate);
       return { ...game, week };

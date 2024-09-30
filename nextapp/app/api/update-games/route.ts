@@ -32,7 +32,7 @@ export async function POST() {
 
     console.log(`Fetched ${response.data.length} games from Odds API`);
 
-    let successfulUpserts = 0;
+    let updatedGames = [];
 
     for (const game of response.data) {
       const homeTeam = game.home_team;
@@ -78,32 +78,30 @@ export async function POST() {
         continue;
       }
 
-      // Upsert game
-      const { error: gameError } = await supabase.from("games").upsert(
-        {
-          sport_key: sportKey,
-          commence_time: commenceTime,
-          home_team_id: homeTeamData.id,
-          away_team_id: awayTeamData.id,
-          home_spread: homeSpread,
-          away_spread: awaySpread,
-        },
-        { onConflict: "sport_key,commence_time,home_team_id,away_team_id" }
-      );
-
-      if (gameError) {
-        console.error("Error upserting game:", gameError);
-      } else {
-        successfulUpserts++;
-      }
+      // Add the processed game to the updatedGames array
+      updatedGames.push({
+        id: game.id,
+        sport_key: sportKey,
+        commence_time: commenceTime,
+        home_team_id: homeTeamData.id,
+        away_team_id: awayTeamData.id,
+        home_spread: homeSpread,
+        away_spread: awaySpread,
+        week: calculateNFLWeek(commenceTime),
+      });
     }
 
+    // Update games in the database with the correct week
+    const { error } = await supabase
+      .from("games")
+      .upsert(updatedGames, { onConflict: "id" });
+
+    if (error) throw error;
+
     console.log(
-      `Games updated successfully. ${successfulUpserts} games upserted.`
+      `Games updated successfully. ${updatedGames.length} games processed.`
     );
-    return NextResponse.json({
-      message: `Games updated successfully. ${successfulUpserts} games upserted.`,
-    });
+    return NextResponse.json(updatedGames);
   } catch (error) {
     console.error("Error updating games:", error);
     return NextResponse.json(
@@ -111,4 +109,12 @@ export async function POST() {
       { status: 500 }
     );
   }
+}
+
+// Helper function to calculate NFL week
+function calculateNFLWeek(date: Date): number {
+  const nflSeasonStart = new Date(2024, 8, 5); // September 5, 2024 (Thursday)
+  const timeDiff = date.getTime() - nflSeasonStart.getTime();
+  const daysDiff = Math.floor(timeDiff / (1000 * 3600 * 24));
+  return Math.floor(daysDiff / 7) + 1;
 }
