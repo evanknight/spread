@@ -49,10 +49,7 @@ export const calculatePotentialPoints = (
   game: Game,
   isHomeTeam: boolean
 ): number => {
-  if (isHomeTeam) {
-    return game.total_points;
-  } else {
-    // For the away team, we need to calculate based on the home spread
-    return 10 + -game.home_spread;
-  }
+  const basePoints = 10;
+  const spread = isHomeTeam ? game.home_spread : -game.home_spread;
+  return Math.round(basePoints + spread);
 };
