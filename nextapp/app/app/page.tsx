@@ -21,6 +21,7 @@ import {
   getTeamLogo,
   calculatePotentialPoints,
 } from "@/utils/gameUtils";
+import { ClipLoader } from "react-spinners";
 
 export default function Home() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -169,7 +170,11 @@ export default function Home() {
   };
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <ClipLoader color="#3B82F6" size={50} />
+      </div>
+    );
   }
 
   if (error) {
