@@ -7,10 +7,10 @@ interface GameListProps {
   games: Game[];
   picks: Pick[];
   currentUser: User | null;
-  makePick: (gameId: number, teamId: number) => void;
+  makePick: (gameId: number, teamId: number, week: number) => void;
   formatGameTime: (dateString: string) => string;
   getTeamLogo: (teamName: string) => string;
-  calculatePotentialPoints: (spread: number) => number;
+  calculatePotentialPoints: (game: Game, isHomeTeam: boolean) => number;
   currentWeek: number;
 }
 
@@ -111,40 +111,40 @@ const GameList: React.FC<GameListProps> = ({
                     {homeTeamPicked &&
                       `Locked ${getTeamNameOnly(
                         game.home_team.name
-                      )} (${calculatePotentialPoints(game.home_spread)}pt)`}
+                      )} (${calculatePotentialPoints(game, true)}pt)`}
                     {awayTeamPicked &&
                       `Locked ${getTeamNameOnly(
                         game.away_team.name
-                      )} (${calculatePotentialPoints(game.away_spread)}pt)`}
+                      )} (${calculatePotentialPoints(game, false)}pt)`}
                     {!homeTeamPicked && !awayTeamPicked && "No pick made"}
                   </div>
                 ) : (
                   <>
                     <button
-                      onClick={() => makePick(game.id, game.home_team.id)}
+                      onClick={() => makePick(game.id, game.home_team.id, week)}
                       className={`px-4 py-2 rounded-full transition-colors duration-200 ${
                         homeTeamPicked
                           ? "bg-blue-500 text-white"
                           : "bg-white text-blue-500 border border-blue-500 hover:bg-blue-500 hover:text-white"
                       }`}
-                      disabled={homeTeamPicked || awayTeamPicked}
+                      disabled={!!userPick}
                     >
                       {homeTeamPicked ? "Locked" : "Lock"}{" "}
                       {getTeamNameOnly(game.home_team.name)} (
-                      {calculatePotentialPoints(game.home_spread)}pt)
+                      {calculatePotentialPoints(game, true)}pt)
                     </button>
                     <button
-                      onClick={() => makePick(game.id, game.away_team.id)}
+                      onClick={() => makePick(game.id, game.away_team.id, week)}
                       className={`px-4 py-2 rounded-full transition-colors duration-200 ${
                         awayTeamPicked
                           ? "bg-blue-500 text-white"
                           : "bg-white text-blue-500 border border-blue-500 hover:bg-blue-500 hover:text-white"
                       }`}
-                      disabled={homeTeamPicked || awayTeamPicked}
+                      disabled={!!userPick}
                     >
                       {awayTeamPicked ? "Locked" : "Lock"}{" "}
                       {getTeamNameOnly(game.away_team.name)} (
-                      {calculatePotentialPoints(game.away_spread)}pt)
+                      {calculatePotentialPoints(game, false)}pt)
                     </button>
                   </>
                 )}

@@ -114,18 +114,44 @@ export default function Home() {
     loadData();
   }, [currentWeek]);
 
-  const handleMakePick = async (gameId: number, teamId: number) => {
+  const handleMakePick = async (
+    gameId: number,
+    teamId: number,
+    week: number
+  ) => {
+    if (!currentUser) return;
+
     try {
-      const updatedPicks = await makePick(
-        supabase,
-        gameId,
-        teamId,
-        currentUser,
-        currentWeek
-      );
-      setPicks(updatedPicks);
-    } catch (err) {
-      console.error("Error making pick:", err);
+      // Remove any existing pick for this week
+      const { error: deleteError } = await supabase
+        .from("picks")
+        .delete()
+        .match({ user_id: currentUser.id, week: week });
+
+      if (deleteError) throw deleteError;
+
+      // Insert the new pick
+      const { data, error } = await supabase
+        .from("picks")
+        .insert({
+          user_id: currentUser.id,
+          game_id: gameId,
+          team_picked: teamId,
+          week: week,
+        })
+        .select();
+
+      if (error) throw error;
+
+      // Update the picks state with the new pick
+      setPicks((prevPicks) => {
+        const newPicks = prevPicks.filter(
+          (pick) => pick.week !== week || pick.user_id !== currentUser.id
+        );
+        return [...newPicks, data[0]];
+      });
+    } catch (error) {
+      console.error("Error making pick:", error);
       setError("Failed to make pick");
     }
   };

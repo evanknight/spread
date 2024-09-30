@@ -45,7 +45,14 @@ export const getTeamLogo = (teamName: string): string => {
   return `/images/team-logos/${simplifiedName}.png`;
 };
 
-export const calculatePotentialPoints = (game: Game) => {
-  // Implement your logic for calculating potential points
-  return 10; // Placeholder value
+export const calculatePotentialPoints = (
+  game: Game,
+  isHomeTeam: boolean
+): number => {
+  if (isHomeTeam) {
+    return game.total_points;
+  } else {
+    // For the away team, we need to calculate based on the home spread
+    return 10 + -game.home_spread;
+  }
 };

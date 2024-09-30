@@ -10,6 +10,7 @@ export interface Game {
   away_team: Team;
   home_spread: number;
   away_spread: number;
+  total_points: number;
   week: number | null;
 }
 
