@@ -27,8 +27,8 @@ export default function Login() {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
-      <div className="px-8 py-6 mt-4 text-left bg-white dark:bg-gray-800 shadow-lg">
-        <div className="flex justify-center mb-6">
+      <div className="px-8 py-6 mt-4 text-left bg-white dark:bg-gray-800 rounded-xl shadow-lg">
+        <div className="flex justify-center mb-8">
           <Image
             src="/images/logos/logo-dark.png"
             alt="The Spread Logo"
@@ -44,9 +44,6 @@ export default function Login() {
             className="block dark:hidden"
           />
         </div>
-        <h3 className="text-2xl font-bold text-center text-gray-800 dark:text-white">
-          Login to your account
-        </h3>
         <div className="mt-4">
           <div>
             <button
