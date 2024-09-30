@@ -7,7 +7,7 @@ interface LeaderboardProps {
 
 const Leaderboard: React.FC<LeaderboardProps> = ({ users }) => {
   return (
-    <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-4">
+    <div className="bg-white dark:bg-gray-800 border border-slate-200 rounded-xl p-4">
       <h3 className="text-lg font-semibold mb-3 dark:text-white">
         Leaderboard
       </h3>

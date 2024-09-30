@@ -7,59 +7,60 @@ import GameList from "@/components/GameList";
 import Leaderboard from "@/components/Leaderboard";
 import WeekPicks from "@/components/WeekPicks";
 import { supabase } from "@/lib/supabase";
-import { Team, Game, User, Pick } from "@/types/types";
-import { getBaseUrl } from "@/utils/environment";
+import { Game, User, Pick } from "@/types/types";
 import {
   fetchGames,
   fetchUsers,
   fetchPicks,
-  makePick,
   fetchGamesFromAPI,
+  calculateNFLWeek,
+  makePick,
 } from "@/utils/dataFetchers";
 import {
   formatGameTime,
   getTeamLogo,
   calculatePotentialPoints,
-} from "@/utils/helpers";
-import { getCurrentNFLWeek } from "@/utils/dateUtils";
+} from "@/utils/gameUtils";
+import { getBaseUrl } from "@/utils/baseUrl";
 
 export default function Home() {
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [games, setGames] = useState<Game[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [picks, setPicks] = useState<Pick[]>([]);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [timeRemaining, setTimeRemaining] = useState<string>("");
-  const [currentWeek, setCurrentWeek] = useState<number>(getCurrentNFLWeek());
   const [isLoading, setIsLoading] = useState(true);
+  const [currentWeek, setCurrentWeek] = useState(calculateNFLWeek(new Date()));
 
   const router = useRouter();
 
   const checkUser = useCallback(async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (user) {
-      await fetchCurrentUser(user.id);
-    } else {
-      window.location.href = `${getBaseUrl()}/login`;
-    }
-  }, []);
-
-  const fetchCurrentUser = async (userId: string) => {
     try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        router.push("/login");
+        return;
+      }
+
       const { data, error } = await supabase
         .from("users")
         .select("*")
-        .eq("id", userId)
+        .eq("id", user.id)
         .single();
 
       if (error) {
         if (error.code === "PGRST116") {
+          // User not found in the database, create a new user
           const { data: userData } = await supabase.auth.getUser();
           const { data: newUser, error: createError } = await supabase
             .from("users")
-            .insert({ id: userId, name: userData.user?.email, total_points: 0 })
+            .insert({
+              id: user.id,
+              name: userData.user?.email,
+              total_points: 0,
+            })
             .select()
             .single();
 
@@ -75,7 +76,7 @@ export default function Home() {
       console.error("Error fetching current user:", err);
       setError("Failed to fetch current user");
     }
-  };
+  }, [router]);
 
   const signOut = async () => {
     try {
@@ -92,129 +93,102 @@ export default function Home() {
   }, [checkUser]);
 
   useEffect(() => {
-    async function fetchInitialData() {
+    const loadData = async () => {
       setIsLoading(true);
-      await fetchGames(supabase, currentWeek, setGames, setError);
-      await fetchUsers(supabase, setUsers, setError);
-      await fetchPicks(supabase, currentWeek, setPicks, setError);
-      await fetchPicks(
+      try {
+        const currentWeekGames = await fetchGames(supabase, currentWeek);
+        const nextWeekGames = await fetchGames(supabase, currentWeek + 1);
+        setGames([...currentWeekGames, ...nextWeekGames]);
+        const usersData = await fetchUsers(supabase);
+        setUsers(usersData);
+        const picksData = await fetchPicks(supabase, currentWeek);
+        setPicks(picksData);
+      } catch (err) {
+        console.error("Error loading data:", err);
+        setError("Failed to load data");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [currentWeek]);
+
+  const handleMakePick = async (gameId: number, teamId: number) => {
+    try {
+      const updatedPicks = await makePick(
         supabase,
-        currentWeek - 1,
-        (lastWeekPicks) => {
-          setPicks((prevPicks) => [
-            ...prevPicks,
-            ...(Array.isArray(lastWeekPicks) ? lastWeekPicks : []),
-          ]);
-        },
-        setError
+        gameId,
+        teamId,
+        currentUser,
+        currentWeek
       );
+      setPicks(updatedPicks);
+    } catch (err) {
+      console.error("Error making pick:", err);
+      setError("Failed to make pick");
+    }
+  };
+
+  const handleFetchGames = async () => {
+    try {
+      setIsLoading(true);
+      const fetchedGames = await fetchGamesFromAPI(supabase, currentWeek);
+      setGames(fetchedGames);
+    } catch (err) {
+      console.error("Error fetching games from API:", err);
+      setError("Failed to fetch games from API");
+    } finally {
       setIsLoading(false);
     }
-    if (currentUser) {
-      fetchInitialData();
-    }
-  }, [currentUser, currentWeek]);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      const now = new Date();
-      const firstGame = games[0];
-      if (!firstGame) return;
-
-      const gameStart = new Date(firstGame.commence_time);
-      const diff = gameStart.getTime() - now.getTime();
-
-      if (diff <= 0) {
-        setTimeRemaining("Picks are locked");
-        clearInterval(timer);
-      } else {
-        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-        const hours = Math.floor(
-          (diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
-        );
-        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-        setTimeRemaining(`${days}d ${hours}h ${minutes}m ${seconds}s`);
-      }
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [games]);
+  };
 
   if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
-        <div className="ml-4 text-2xl text-gray-500 dark:text-gray-300">
-          Loading...
-        </div>
-      </div>
-    );
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>;
   }
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
       <Header
-        fetchGamesFromAPI={() =>
-          fetchGamesFromAPI(
-            supabase,
-            currentWeek,
-            setGames,
-            setError,
-            setIsLoading
-          )
-        }
+        currentUser={currentUser}
         signOut={signOut}
+        fetchGamesFromAPI={handleFetchGames}
       />
-      {error && (
-        <div className="bg-red-100 dark:bg-red-800 text-red-700 dark:text-red-200 border border-red-400 px-4 py-3 rounded mb-4">
-          {error}
-        </div>
-      )}
-      <div className="flex flex-col md:flex-row gap-4">
-        <div className="w-full md:w-1/3 order-1 md:order-2 space-y-4">
-          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg font-mono text-center">
-            <div className="text-sm mb-1 dark:text-white">
-              Time until first game:
-            </div>
-            <div className="text-xl dark:text-white">{timeRemaining}</div>
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex flex-col md:flex-row gap-8">
+          <div className="w-full md:w-1/3 order-1 md:order-1 space-y-4">
+            <Leaderboard users={users} />
+            <WeekPicks
+              currentWeek={currentWeek}
+              users={users}
+              picks={picks}
+              games={games}
+              getTeamLogo={getTeamLogo}
+              calculatePotentialPoints={calculatePotentialPoints}
+            />
           </div>
-          <WeekPicks
-            currentWeek={currentWeek}
-            users={users}
-            picks={picks}
-            games={games}
-            getTeamLogo={getTeamLogo}
-            calculatePotentialPoints={calculatePotentialPoints}
-          />
-          <Leaderboard users={users} />
+          <div className="w-full md:w-2/3 order-2 md:order-2">
+            <GameList
+              games={games}
+              picks={picks}
+              currentUser={currentUser}
+              makePick={handleMakePick}
+              formatGameTime={formatGameTime}
+              getTeamLogo={getTeamLogo}
+              calculatePotentialPoints={calculatePotentialPoints}
+              currentWeek={currentWeek}
+            />
+          </div>
         </div>
-        <div className="w-full md:w-2/3 order-2 md:order-1">
-          <GameList
-            games={games}
-            picks={picks}
-            currentUser={currentUser}
-            makePick={(gameId, teamId) =>
-              makePick(
-                supabase,
-                gameId,
-                teamId,
-                currentUser,
-                currentWeek,
-                setPicks,
-                setError
-              )
-            }
-            formatGameTime={formatGameTime}
-            getTeamLogo={getTeamLogo}
-            calculatePotentialPoints={calculatePotentialPoints}
-          />
+        <div className="mt-8 text-xs text-gray-500 dark:text-gray-400">
+          <h3 className="font-bold mb-1">Debug Info:</h3>
+          <p>Number of games: {games.length}</p>
+          <p>Current Week: {currentWeek}</p>
         </div>
-      </div>
-      <div className="mt-8 text-xs text-gray-500 dark:text-gray-400">
-        <h3 className="font-bold mb-1">Debug Info:</h3>
-        <p>Number of games: {games.length}</p>
-        <p>Current Week: {currentWeek}</p>
       </div>
     </div>
   );

@@ -69,7 +69,7 @@ export default function Login() {
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
           {error && (
             <div
-              className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
+              className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl relative mb-4"
               role="alert"
             >
               <span className="block sm:inline">{error}</span>

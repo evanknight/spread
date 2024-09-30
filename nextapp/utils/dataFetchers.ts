@@ -3,10 +3,8 @@ import { Game, User, Pick } from "@/types/types";
 
 export const fetchGames = async (
   supabase: SupabaseClient,
-  currentWeek: number,
-  setGames: React.Dispatch<React.SetStateAction<Game[]>>,
-  setError: React.Dispatch<React.SetStateAction<string | null>>
-) => {
+  week: number
+): Promise<Game[]> => {
   try {
     console.log("Fetching games...");
     const { data, error } = await supabase
@@ -18,7 +16,7 @@ export const fetchGames = async (
         away_team:teams!away_team_id(*)
       `
       )
-      .eq("week", currentWeek)
+      .eq("week", week)
       .order("commence_time", { ascending: true });
 
     if (error) {
@@ -26,91 +24,40 @@ export const fetchGames = async (
       throw error;
     }
 
-    console.log("Fetched games for week", currentWeek, ":", data);
+    console.log(`Fetched games for week ${week}:`, data);
 
-    if (!data || data.length === 0) {
-      console.log(
-        "No games found for week",
-        currentWeek,
-        ". Fetching all games..."
-      );
-      const allGamesResult = await supabase
-        .from("games")
-        .select(
-          `
-          *,
-          home_team:teams!home_team_id(*),
-          away_team:teams!away_team_id(*)
-        `
-        )
-        .order("commence_time", { ascending: true });
-
-      if (allGamesResult.error) {
-        console.error(
-          "Supabase error when fetching all games:",
-          allGamesResult.error
-        );
-        throw allGamesResult.error;
-      }
-
-      const allGames = allGamesResult.data;
-      console.log("Fetched all games:", allGames);
-
-      const currentDate = new Date();
-      const startOfWeek = new Date(
-        currentDate.setDate(currentDate.getDate() - currentDate.getDay() + 1)
-      );
-      const endOfWeek = new Date(
-        currentDate.setDate(currentDate.getDate() - currentDate.getDay() + 7)
-      );
-
-      const filteredGames = allGames.filter((game) => {
-        const gameDate = new Date(game.commence_time);
-        return gameDate >= startOfWeek && gameDate <= endOfWeek;
-      });
-
-      console.log("Filtered games for current week:", filteredGames);
-      setGames(filteredGames);
-    } else {
-      setGames(data);
-    }
+    return data || [];
   } catch (err) {
     console.error("Error fetching games:", err);
-    setError("Failed to fetch games");
+    throw err;
   }
 };
 
-export const fetchUsers = async (
-  supabase: SupabaseClient,
-  setUsers: React.Dispatch<React.SetStateAction<User[]>>,
-  setError: React.Dispatch<React.SetStateAction<string | null>>
-) => {
+export const fetchUsers = async (supabase: SupabaseClient): Promise<User[]> => {
   try {
     const { data, error } = await supabase.from("users").select("*");
     if (error) throw error;
-    setUsers(data || []);
+    return data;
   } catch (err) {
     console.error("Error fetching users:", err);
-    setError("Failed to fetch users");
+    throw err;
   }
 };
 
 export const fetchPicks = async (
   supabase: SupabaseClient,
-  currentWeek: number,
-  setPicks: React.Dispatch<React.SetStateAction<Pick[]>>,
-  setError: React.Dispatch<React.SetStateAction<string | null>>
-) => {
+  week: number
+): Promise<Pick[]> => {
   try {
     const { data, error } = await supabase
       .from("picks")
       .select("*")
-      .eq("week", currentWeek);
+      .eq("week", week);
     if (error) throw error;
-    setPicks(data || []);
+    return data;
   } catch (err) {
     console.error("Error fetching picks:", err);
-    setError("Failed to fetch picks");
+    throw err;
   }
 };
 
@@ -119,29 +66,25 @@ export const makePick = async (
   gameId: number,
   teamId: number,
   currentUser: User | null,
-  currentWeek: number,
-  setPicks: React.Dispatch<React.SetStateAction<Pick[]>>,
-  setError: React.Dispatch<React.SetStateAction<string | null>>
-) => {
-  if (!currentUser) {
-    setError("You must be logged in to make a pick");
-    return;
-  }
-
+  currentWeek: number
+): Promise<Pick[]> => {
   try {
-    const { data: existingPicks, error: fetchError } = await supabase
+    if (!currentUser) throw new Error("No user logged in");
+
+    const { data: existingPick, error: fetchError } = await supabase
       .from("picks")
       .select("*")
       .eq("user_id", currentUser.id)
-      .eq("week", currentWeek);
+      .eq("game_id", gameId)
+      .single();
 
-    if (fetchError) throw fetchError;
+    if (fetchError && fetchError.code !== "PGRST116") throw fetchError;
 
-    if (existingPicks && existingPicks.length > 0) {
+    if (existingPick) {
       const { error } = await supabase
         .from("picks")
-        .update({ game_id: gameId, team_picked: teamId })
-        .eq("id", existingPicks[0].id);
+        .update({ team_picked: teamId })
+        .eq("id", existingPick.id);
 
       if (error) throw error;
     } else {
@@ -162,27 +105,25 @@ export const makePick = async (
 
     if (refetchError) throw refetchError;
 
-    setPicks(updatedPicks || []);
+    return updatedPicks || [];
   } catch (err) {
     console.error("Error making pick:", err);
-    setError("Failed to make pick");
+    throw err;
   }
 };
 
 export const fetchGamesFromAPI = async (
   supabase: SupabaseClient,
-  currentWeek: number,
-  setGames: React.Dispatch<React.SetStateAction<Game[]>>,
-  setError: React.Dispatch<React.SetStateAction<string | null>>,
-  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>
-) => {
+  currentWeek: number
+): Promise<Game[]> => {
   try {
-    setIsLoading(true);
     const response = await fetch("/api/update-games", { method: "POST" });
     if (!response.ok) {
       const errorData = await response.json();
       console.error("API error details:", errorData);
-      throw new Error(`Failed to fetch games from API: ${errorData.error}`);
+      throw new Error(
+        `Failed to fetch games from API: ${errorData.error}\nDetails: ${errorData.details}`
+      );
     }
     const result = await response.json();
 
@@ -193,28 +134,11 @@ export const fetchGamesFromAPI = async (
       throw new Error("Invalid response format from API");
     }
 
-    // Calculate and set the week for each game
-    const updatedGames = result.map((game: Game) => {
-      const gameDate = new Date(game.commence_time);
-      const week = calculateNFLWeek(gameDate);
-      return { ...game, week };
-    });
-
-    console.log("Updated games:", updatedGames);
-
-    // Update games in the database with the correct week
-    const { error } = await supabase
-      .from("games")
-      .upsert(updatedGames, { onConflict: "id" });
-
-    if (error) throw error;
-
-    await fetchGames(supabase, currentWeek, setGames, setError);
-    setIsLoading(false);
+    // Fetch games again to get the updated data
+    return await fetchGames(supabase, currentWeek);
   } catch (err) {
     console.error("Error fetching games from API:", err);
-    setError(err instanceof Error ? err.message : String(err));
-    setIsLoading(false);
+    throw err;
   }
 };
 

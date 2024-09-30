@@ -19,11 +19,9 @@ const WeekPicks: React.FC<WeekPicksProps> = ({
   getTeamLogo,
   calculatePotentialPoints,
 }) => {
-  const renderWeekPicks = (week: number) => (
-    <div className="bg-white dark:bg-gray-800 p-4 rounded shadow mb-4">
-      <h3 className="text-lg font-semibold mb-2 dark:text-white">
-        Week {week} Picks
-      </h3>
+  const renderWeekPicks = (week: number, title: string) => (
+    <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-slate-200 mb-4">
+      <h3 className="text-lg font-semibold mb-2 dark:text-white">{title}</h3>
       {users.map((user) => {
         const userPick = picks.find(
           (p) => p.user_id === user.id && p.week === week
@@ -67,8 +65,8 @@ const WeekPicks: React.FC<WeekPicksProps> = ({
 
   return (
     <>
-      {renderWeekPicks(currentWeek)}
-      {renderWeekPicks(currentWeek - 1)}
+      {renderWeekPicks(currentWeek, `Week ${currentWeek} Picks`)}
+      {renderWeekPicks(currentWeek + 1, "Next Week's Games")}
     </>
   );
 };

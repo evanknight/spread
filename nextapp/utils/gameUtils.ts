@@ -20,20 +20,29 @@ export const fetchGames = async (
   }
 };
 
-export const formatGameTime = (game: Game) => {
-  const date = new Date(game.commence_time);
+export const formatGameTime = (dateString: string): string => {
+  const date = new Date(dateString);
   return date.toLocaleString("en-US", {
     weekday: "short",
     month: "short",
     day: "numeric",
     hour: "numeric",
-    minute: "2-digit",
+    minute: "numeric",
     timeZone: "America/New_York",
+    hour12: true,
   });
 };
 
-export const getTeamLogo = (teamName: string) => {
-  return `/team-logos/${teamName.toLowerCase().replace(" ", "-")}.png`;
+export const getTeamLogo = (teamName: string): string => {
+  const teamNameMap: { [key: string]: string } = {
+    "Los Angeles Rams": "rams",
+    "Los Angeles Chargers": "chargers",
+    // Add other team name mappings here
+  };
+
+  const simplifiedName =
+    teamNameMap[teamName] || teamName.split(" ").pop()?.toLowerCase();
+  return `/images/team-logos/${simplifiedName}.png`;
 };
 
 export const calculatePotentialPoints = (game: Game) => {

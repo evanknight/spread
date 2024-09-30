@@ -13,7 +13,7 @@ const Header: React.FC<HeaderProps> = ({ fetchGamesFromAPI, signOut }) => {
       <h1 className="text-3xl font-bold">The Spread</h1>
       <div className="flex items-center space-x-4">
         <Menu as="div" className="relative inline-block text-left">
-          <Menu.Button className="inline-flex justify-center w-full px-4 py-2 text-sm font-medium text-gray-700 bg-white dark:bg-gray-800 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700">
+          <Menu.Button className="inline-flex justify-center w-full px-4 py-2 text-sm font-medium text-gray-700 bg-white dark:bg-gray-800 rounded-xl border border-slate-200 hover:bg-gray-50 dark:hover:bg-gray-700">
             <EllipsisHorizontalIcon
               className="w-7 h-7 text-gray-400"
               aria-hidden="true"

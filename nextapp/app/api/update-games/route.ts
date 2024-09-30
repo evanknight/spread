@@ -88,14 +88,14 @@ export async function POST() {
 
         // Add the processed game to the updatedGames array
         updatedGames.push({
-          id: game.id,
           sport_key: sportKey,
-          commence_time: commenceTime,
+          commence_time: commenceTime.toISOString(),
           home_team_id: homeTeamData.id,
           away_team_id: awayTeamData.id,
           home_spread: homeSpread,
           away_spread: awaySpread,
           week: calculateNFLWeek(commenceTime),
+          odds_api_id: game.id,
         });
 
         console.log(`Successfully processed game: ${homeTeam} vs ${awayTeam}`);
@@ -108,12 +108,18 @@ export async function POST() {
       `Processed ${updatedGames.length} games. Upserting to database...`
     );
 
-    // Update games in the database with the correct week
-    const { error } = await supabase
-      .from("games")
-      .upsert(updatedGames, { onConflict: "id" });
+    console.log("Upserting games:", JSON.stringify(updatedGames, null, 2));
 
-    if (error) throw error;
+    // Update games in the database
+    const { error } = await supabase.from("games").upsert(updatedGames, {
+      onConflict: "sport_key,commence_time,home_team_id,away_team_id",
+      update: ["home_spread", "away_spread", "week", "odds_api_id"],
+    });
+
+    if (error) {
+      console.error("Error upserting games to database:", error);
+      throw error;
+    }
 
     console.log(
       `Games updated successfully. ${updatedGames.length} games processed.`
@@ -124,7 +130,7 @@ export async function POST() {
     return NextResponse.json(
       {
         error: "Failed to update games",
-        details: error instanceof Error ? error.message : String(error),
+        details: error instanceof Error ? error.message : JSON.stringify(error),
       },
       { status: 500 }
     );

@@ -37,7 +37,7 @@ export default function LandingPage() {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="p-6 max-w-sm w-full bg-white shadow-md rounded-md">
+      <div className="p-6 max-w-sm w-full bg-white shadow-md rounded-xl">
         <h1 className="text-2xl font-bold mb-4 text-center">
           Welcome to NFL Picks
         </h1>
