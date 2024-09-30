@@ -1,10 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/navigation";
+import { getBaseUrl } from "@/utils/environment";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+const siteUrl =
+  typeof window !== "undefined"
+    ? window.location.origin
+    : process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -20,7 +24,7 @@ export default function Login() {
         email,
         password,
         options: {
-          emailRedirectTo: `${siteUrl}/auth/callback`,
+          emailRedirectTo: `${getBaseUrl()}/auth/callback`,
         },
       });
       if (error) throw error;
@@ -43,8 +47,7 @@ export default function Login() {
         password,
       });
       if (error) throw error;
-      router.push("/");
-      router.refresh();
+      window.location.href = `${getBaseUrl()}/app`;
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message);

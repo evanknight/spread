@@ -6,7 +6,7 @@ import { Inter } from "next/font/google";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "NFL Picks App",
+  title: "The Spread",
   description: "Make your NFL picks and compete with friends!",
 };
 
