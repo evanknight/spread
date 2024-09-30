@@ -101,7 +101,10 @@ export default function Home() {
         supabase,
         currentWeek - 1,
         (lastWeekPicks) => {
-          setPicks((prevPicks) => [...prevPicks, ...lastWeekPicks]);
+          setPicks((prevPicks) => [
+            ...prevPicks,
+            ...(Array.isArray(lastWeekPicks) ? lastWeekPicks : []),
+          ]);
         },
         setError
       );
