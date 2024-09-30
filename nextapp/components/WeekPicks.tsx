@@ -1,6 +1,6 @@
 import React from "react";
 import Image from "next/image";
-import { Game, Pick, User } from "@/types/types";
+import { User, Pick, Game } from "@/types/types";
 
 interface WeekPicksProps {
   currentWeek: number;
@@ -8,7 +8,7 @@ interface WeekPicksProps {
   picks: Pick[];
   games: Game[];
   getTeamLogo: (teamName: string) => string;
-  calculatePotentialPoints: (spread: number | undefined) => number;
+  calculatePotentialPoints: (game: Game, isHomeTeam: boolean) => number;
 }
 
 const WeekPicks: React.FC<WeekPicksProps> = ({
@@ -35,7 +35,7 @@ const WeekPicks: React.FC<WeekPicksProps> = ({
         return (
           <div key={`${user.id}-${week}`} className="mb-2">
             <span className="text-sm dark:text-white">{user.name}:</span>
-            {pickedTeam && (
+            {pickedTeam && game && (
               <div className="flex items-center mt-1">
                 <Image
                   src={getTeamLogo(pickedTeam.name)}
@@ -49,9 +49,8 @@ const WeekPicks: React.FC<WeekPicksProps> = ({
                 </div>
                 <div className="ml-auto text-right text-sm dark:text-white">
                   {calculatePotentialPoints(
-                    userPick?.team_picked === game?.home_team.id
-                      ? game?.home_spread
-                      : game?.away_spread
+                    game,
+                    userPick.team_picked === game.home_team.id
                   )}
                   pts
                 </div>
