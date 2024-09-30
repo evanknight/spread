@@ -17,6 +17,7 @@ export async function POST() {
   const dateFormat = "iso";
 
   try {
+    console.log("Fetching data from Odds API...");
     const response = await axios.get(
       `https://api.the-odds-api.com/v4/sports/${sportKey}/odds`,
       {
@@ -35,61 +36,76 @@ export async function POST() {
     let updatedGames = [];
 
     for (const game of response.data) {
-      const homeTeam = game.home_team;
-      const awayTeam = game.away_team;
-      const commenceTime = new Date(game.commence_time);
+      try {
+        const homeTeam = game.home_team;
+        const awayTeam = game.away_team;
+        const commenceTime = new Date(game.commence_time);
 
-      // Find or create teams
-      const { data: homeTeamData, error: homeTeamError } = await supabase
-        .from("teams")
-        .upsert({ name: homeTeam }, { onConflict: "name" })
-        .select("id")
-        .single();
+        console.log(`Processing game: ${homeTeam} vs ${awayTeam}`);
 
-      const { data: awayTeamData, error: awayTeamError } = await supabase
-        .from("teams")
-        .upsert({ name: awayTeam }, { onConflict: "name" })
-        .select("id")
-        .single();
+        // Find or create teams
+        const { data: homeTeamData, error: homeTeamError } = await supabase
+          .from("teams")
+          .upsert({ name: homeTeam }, { onConflict: "name" })
+          .select("id")
+          .single();
 
-      if (homeTeamError || awayTeamError) {
-        console.error("Error upserting teams:", homeTeamError || awayTeamError);
-        continue;
+        const { data: awayTeamData, error: awayTeamError } = await supabase
+          .from("teams")
+          .upsert({ name: awayTeam }, { onConflict: "name" })
+          .select("id")
+          .single();
+
+        if (homeTeamError || awayTeamError) {
+          console.error(
+            "Error upserting teams:",
+            homeTeamError || awayTeamError
+          );
+          continue;
+        }
+
+        // Get the spread
+        const bookmaker = game.bookmakers[0];
+        const spreadsMarket = bookmaker.markets.find(
+          (m: { key: string }) => m.key === "spreads"
+        );
+        if (!spreadsMarket) {
+          console.error("No spreads market found for game:", game.id);
+          continue;
+        }
+        const homeSpread = spreadsMarket.outcomes.find(
+          (o: { name: string }) => o.name === homeTeam
+        )?.point;
+        const awaySpread = spreadsMarket.outcomes.find(
+          (o: { name: string }) => o.name === awayTeam
+        )?.point;
+
+        if (homeSpread === undefined || awaySpread === undefined) {
+          console.error("Spread not found for game:", game.id);
+          continue;
+        }
+
+        // Add the processed game to the updatedGames array
+        updatedGames.push({
+          id: game.id,
+          sport_key: sportKey,
+          commence_time: commenceTime,
+          home_team_id: homeTeamData.id,
+          away_team_id: awayTeamData.id,
+          home_spread: homeSpread,
+          away_spread: awaySpread,
+          week: calculateNFLWeek(commenceTime),
+        });
+
+        console.log(`Successfully processed game: ${homeTeam} vs ${awayTeam}`);
+      } catch (gameError) {
+        console.error("Error processing game:", gameError);
       }
-
-      // Get the spread
-      const bookmaker = game.bookmakers[0];
-      const spreadsMarket = bookmaker.markets.find(
-        (m: { key: string }) => m.key === "spreads"
-      );
-      if (!spreadsMarket) {
-        console.error("No spreads market found for game:", game.id);
-        continue;
-      }
-      const homeSpread = spreadsMarket.outcomes.find(
-        (o: { name: string }) => o.name === homeTeam
-      )?.point;
-      const awaySpread = spreadsMarket.outcomes.find(
-        (o: { name: string }) => o.name === awayTeam
-      )?.point;
-
-      if (homeSpread === undefined || awaySpread === undefined) {
-        console.error("Spread not found for game:", game.id);
-        continue;
-      }
-
-      // Add the processed game to the updatedGames array
-      updatedGames.push({
-        id: game.id,
-        sport_key: sportKey,
-        commence_time: commenceTime,
-        home_team_id: homeTeamData.id,
-        away_team_id: awayTeamData.id,
-        home_spread: homeSpread,
-        away_spread: awaySpread,
-        week: calculateNFLWeek(commenceTime),
-      });
     }
+
+    console.log(
+      `Processed ${updatedGames.length} games. Upserting to database...`
+    );
 
     // Update games in the database with the correct week
     const { error } = await supabase
@@ -104,7 +120,10 @@ export async function POST() {
     return NextResponse.json(updatedGames);
   } catch (error) {
     console.error("Error updating games:", error);
-    return NextResponse.json([], { status: 500 }); // Return an empty array on error
+    return NextResponse.json(
+      { error: "Failed to update games", details: error.message },
+      { status: 500 }
+    );
   }
 }
 

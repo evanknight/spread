@@ -180,11 +180,13 @@ export const fetchGamesFromAPI = async (
     setIsLoading(true);
     const response = await fetch("/api/update-games", { method: "POST" });
     if (!response.ok) {
-      throw new Error("Failed to fetch games from API");
+      const errorData = await response.json();
+      console.error("API error details:", errorData);
+      throw new Error(`Failed to fetch games from API: ${errorData.error}`);
     }
     const result = await response.json();
 
-    console.log("API response:", result); // Log the entire response
+    console.log("API response:", result);
 
     if (!Array.isArray(result)) {
       console.error("API response is not an array:", result);
@@ -198,7 +200,7 @@ export const fetchGamesFromAPI = async (
       return { ...game, week };
     });
 
-    console.log("Updated games:", updatedGames); // Log the updated games
+    console.log("Updated games:", updatedGames);
 
     // Update games in the database with the correct week
     const { error } = await supabase
@@ -211,7 +213,7 @@ export const fetchGamesFromAPI = async (
     setIsLoading(false);
   } catch (err) {
     console.error("Error fetching games from API:", err);
-    setError("Failed to fetch games from API");
+    setError(`Failed to fetch games from API: ${err.message}`);
     setIsLoading(false);
   }
 };
