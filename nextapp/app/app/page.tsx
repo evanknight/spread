@@ -14,7 +14,6 @@ import {
   fetchPicks,
   fetchGamesFromAPI,
   calculateNFLWeek,
-  makePick,
 } from "@/utils/dataFetchers";
 import {
   formatGameTime,
@@ -130,6 +129,20 @@ export default function Home() {
 
       if (deleteError) throw deleteError;
 
+      // Get the current spread for the game
+      const { data: gameData, error: gameError } = await supabase
+        .from("games")
+        .select("home_spread, away_spread, home_team_id, away_team_id")
+        .eq("id", gameId)
+        .single();
+
+      if (gameError) throw gameError;
+
+      const spread =
+        teamId === gameData.home_team_id
+          ? gameData.home_spread
+          : gameData.away_spread;
+
       // Insert the new pick
       const { data, error } = await supabase
         .from("picks")
@@ -138,6 +151,7 @@ export default function Home() {
           game_id: gameId,
           team_picked: teamId,
           week: week,
+          spread_at_time: spread,
         })
         .select();
 
@@ -150,6 +164,8 @@ export default function Home() {
         );
         return [...newPicks, data[0]];
       });
+
+      console.log("Pick saved successfully:", data[0]);
     } catch (error) {
       console.error("Error making pick:", error);
       setError("Failed to make pick");
