@@ -28,14 +28,14 @@ const WeekPicks: React.FC<WeekPicksProps> = ({
         );
         const game = games.find((g) => g.id === userPick?.game_id);
         const pickedTeam =
-          userPick && userPick.team_picked === game?.home_team.id
-            ? game?.home_team
+          userPick && game && userPick.team_picked === game.home_team.id
+            ? game.home_team
             : game?.away_team;
 
         return (
           <div key={`${user.id}-${week}`} className="mb-2">
             <span className="text-sm dark:text-white">{user.name}:</span>
-            {pickedTeam && game && (
+            {pickedTeam && game && userPick && (
               <div className="flex items-center mt-1">
                 <Image
                   src={getTeamLogo(pickedTeam.name)}
