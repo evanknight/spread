@@ -1,19 +1,27 @@
-export const fetchGames = async (supabase, currentWeek, setGames, setError) => {
+import { SupabaseClient } from "@supabase/supabase-js";
+import { Game } from "@/types/types";
+
+export const fetchGames = async (
+  supabase: SupabaseClient,
+  currentWeek: number,
+  setGames: React.Dispatch<React.SetStateAction<Game[]>>,
+  setError: React.Dispatch<React.SetStateAction<string | null>>
+) => {
   try {
     const { data, error } = await supabase
       .from("games")
       .select("*")
       .eq("week", currentWeek);
     if (error) throw error;
-    setGames(data);
+    setGames(data as Game[]);
   } catch (err) {
     console.error("Error fetching games:", err);
     setError("Failed to fetch games");
   }
 };
 
-export const formatGameTime = (game) => {
-  const date = new Date(game.date);
+export const formatGameTime = (game: Game) => {
+  const date = new Date(game.commence_time);
   return date.toLocaleString("en-US", {
     weekday: "short",
     month: "short",
@@ -24,11 +32,11 @@ export const formatGameTime = (game) => {
   });
 };
 
-export const getTeamLogo = (teamName) => {
+export const getTeamLogo = (teamName: string) => {
   return `/team-logos/${teamName.toLowerCase().replace(" ", "-")}.png`;
 };
 
-export const calculatePotentialPoints = (game) => {
+export const calculatePotentialPoints = (game: Game) => {
   // Implement your logic for calculating potential points
   return 10; // Placeholder value
 };

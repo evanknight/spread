@@ -1,4 +1,11 @@
-export const fetchUsers = async (supabase, setUsers, setError) => {
+import { SupabaseClient } from "@supabase/supabase-js";
+import { User } from "@/types/types";
+
+export const fetchUsers = async (
+  supabase: SupabaseClient,
+  setUsers: React.Dispatch<React.SetStateAction<User[]>>,
+  setError: React.Dispatch<React.SetStateAction<string | null>>
+) => {
   try {
     const { data, error } = await supabase
       .from("users")
