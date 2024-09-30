@@ -21,7 +21,7 @@ import {
   getTeamLogo,
   calculatePotentialPoints,
 } from "@/utils/gameUtils";
-import { getBaseUrl } from "@/utils/baseUrl";
+import { getBaseUrl } from "@/utils/baseUrl.ts";
 
 export default function Home() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);

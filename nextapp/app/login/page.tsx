@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { getBaseUrl } from "@/utils/baseUrl";
+import { getBaseUrl } from "@/utils/baseUrl.ts";
 import Image from "next/image";
 
 export default function Login() {
