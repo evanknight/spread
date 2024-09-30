@@ -17,6 +17,7 @@ export interface User {
   id: string;
   name: string;
   total_points: number;
+  points: number; // Add this line
 }
 
 export interface Pick {
