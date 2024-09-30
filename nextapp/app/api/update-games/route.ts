@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import axios from "axios";
 import { createClient } from "@supabase/supabase-js";
+import { calculateNFLWeek } from "@/utils/dataFetchers";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -121,16 +122,11 @@ export async function POST() {
   } catch (error) {
     console.error("Error updating games:", error);
     return NextResponse.json(
-      { error: "Failed to update games", details: error.message },
+      {
+        error: "Failed to update games",
+        details: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
-}
-
-// Helper function to calculate NFL week
-function calculateNFLWeek(date: Date): number {
-  const nflSeasonStart = new Date(2024, 8, 5); // September 5, 2024 (Thursday)
-  const timeDiff = date.getTime() - nflSeasonStart.getTime();
-  const daysDiff = Math.floor(timeDiff / (1000 * 3600 * 24));
-  return Math.floor(daysDiff / 7) + 1;
 }

@@ -213,13 +213,13 @@ export const fetchGamesFromAPI = async (
     setIsLoading(false);
   } catch (err) {
     console.error("Error fetching games from API:", err);
-    setError(`Failed to fetch games from API: ${err.message}`);
+    setError(err instanceof Error ? err.message : String(err));
     setIsLoading(false);
   }
 };
 
 // Helper function to calculate NFL week
-function calculateNFLWeek(date: Date): number {
+export function calculateNFLWeek(date: Date): number {
   const nflSeasonStart = new Date(2024, 8, 5); // September 5, 2024 (Thursday)
   const timeDiff = date.getTime() - nflSeasonStart.getTime();
   const daysDiff = Math.floor(timeDiff / (1000 * 3600 * 24));
