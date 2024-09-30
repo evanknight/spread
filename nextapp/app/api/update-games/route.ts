@@ -113,7 +113,6 @@ export async function POST() {
     // Update games in the database
     const { error } = await supabase.from("games").upsert(updatedGames, {
       onConflict: "sport_key,commence_time,home_team_id,away_team_id",
-      update: ["home_spread", "away_spread", "week", "odds_api_id"],
     });
 
     if (error) {
