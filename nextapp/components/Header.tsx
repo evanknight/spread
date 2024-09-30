@@ -1,10 +1,6 @@
 import React from "react";
 import { Menu } from "@headlessui/react";
-import {
-  SunIcon,
-  MoonIcon,
-  EllipsisHorizontalIcon,
-} from "@heroicons/react/24/solid";
+import { EllipsisHorizontalIcon } from "@heroicons/react/24/solid";
 
 interface HeaderProps {
   isDarkMode: boolean;
@@ -23,16 +19,16 @@ const Header: React.FC<HeaderProps> = ({
     <div className="flex justify-between items-center mb-4">
       <h1 className="text-3xl font-bold">The Spread</h1>
       <div className="flex items-center space-x-4">
-        <button
-          onClick={toggleDarkMode}
-          className="text-gray-500 dark:text-gray-300"
-        >
-          {isDarkMode ? (
-            <SunIcon className="w-7 h-7" />
-          ) : (
-            <MoonIcon className="w-7 h-7" />
-          )}
-        </button>
+        // <button
+        //   onClick={toggleDarkMode}
+        //   className="text-gray-500 dark:text-gray-300"
+        // >
+        //   {isDarkMode ? (
+        //     <SunIcon className="w-7 h-7" />
+        //   ) : (
+        //     <MoonIcon className="w-7 h-7" />
+        //   )}
+        // </button>
         <Menu as="div" className="relative inline-block text-left">
           <Menu.Button className="inline-flex justify-center w-full px-4 py-2 text-sm font-medium text-gray-700 bg-white dark:bg-gray-800 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700">
             <EllipsisHorizontalIcon

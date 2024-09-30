@@ -1,5 +1,5 @@
 import React from "react";
-import { User } from "@/types/types"; // Update this import
+import { User } from "@/types/types";
 
 interface LeaderboardProps {
   users: User[];
@@ -7,18 +7,21 @@ interface LeaderboardProps {
 
 const Leaderboard: React.FC<LeaderboardProps> = ({ users }) => {
   return (
-    <div className="bg-white shadow-md rounded-lg p-6">
-      <h3 className="text-xl font-semibold mb-4">Leaderboard</h3>
+    <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-4">
+      <h3 className="text-lg font-semibold mb-3 dark:text-white">
+        Leaderboard
+      </h3>
       <div className="space-y-2">
         {users
-          .sort((a, b) => b.total_points - a.total_points) // Change this line
+          .sort((a, b) => b.total_points - a.total_points)
           .map((user, index) => (
             <div key={user.id} className="flex justify-between items-center">
-              <span className="font-medium">
+              <span className="font-medium dark:text-white">
                 {index + 1}. {user.name}
               </span>
-              <span className="text-gray-600">{user.total_points} points</span>{" "}
-              // Change this line
+              <span className="text-gray-600 dark:text-gray-300">
+                {user.total_points} points
+              </span>
             </div>
           ))}
       </div>

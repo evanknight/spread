@@ -21,6 +21,7 @@ import {
   getTeamLogo,
   calculatePotentialPoints,
 } from "@/utils/helpers";
+import { getCurrentNFLWeek } from "@/utils/dateUtils";
 
 export default function Home() {
   const [games, setGames] = useState<Game[]>([]);
@@ -29,9 +30,8 @@ export default function Home() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [timeRemaining, setTimeRemaining] = useState<string>("");
-  const [currentWeek] = useState<number>(4);
+  const [currentWeek, setCurrentWeek] = useState<number>(getCurrentNFLWeek());
   const [isLoading, setIsLoading] = useState(true);
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
 
   const router = useRouter();
 
@@ -87,28 +87,7 @@ export default function Home() {
     }
   };
 
-  const toggleDarkMode = () => {
-    const newDarkMode = !isDarkMode;
-    setIsDarkMode(newDarkMode);
-    if (newDarkMode) {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-    }
-  };
-
   useEffect(() => {
-    const savedTheme = localStorage.getItem("theme");
-    if (savedTheme === "dark") {
-      document.documentElement.classList.add("dark");
-      setIsDarkMode(true);
-    } else {
-      document.documentElement.classList.remove("dark");
-      setIsDarkMode(false);
-    }
-
     checkUser();
   }, [checkUser]);
 
@@ -118,6 +97,14 @@ export default function Home() {
       await fetchGames(supabase, currentWeek, setGames, setError);
       await fetchUsers(supabase, setUsers, setError);
       await fetchPicks(supabase, currentWeek, setPicks, setError);
+      await fetchPicks(
+        supabase,
+        currentWeek - 1,
+        (lastWeekPicks) => {
+          setPicks((prevPicks) => [...prevPicks, ...lastWeekPicks]);
+        },
+        setError
+      );
       setIsLoading(false);
     }
     if (currentUser) {
@@ -163,33 +150,53 @@ export default function Home() {
   }
 
   return (
-    <div className={`${isDarkMode ? "dark" : ""}`}>
-      <div className="container mx-auto p-4">
-        <Header
-          isDarkMode={isDarkMode}
-          toggleDarkMode={toggleDarkMode}
-          fetchGamesFromAPI={() =>
-            fetchGamesFromAPI(
-              supabase,
-              currentWeek,
-              setGames,
-              setError,
-              setIsLoading
-            )
-          }
-          signOut={signOut}
-        />
-        {error && (
-          <div className="bg-red-100 dark:bg-red-800 text-red-700 dark:text-red-200 border border-red-400 px-4 py-3 rounded mb-4">
-            {error}
-          </div>
-        )}
-        <div className="mb-4 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 p-4 rounded-lg font-mono text-center">
-          <div className="text-sm mb-1">Time until first game:</div>
-          <div className="text-2xl">{timeRemaining}</div>
+    <div className="container mx-auto p-4">
+      <Header
+        fetchGamesFromAPI={() =>
+          fetchGamesFromAPI(
+            supabase,
+            currentWeek,
+            setGames,
+            setError,
+            setIsLoading
+          )
+        }
+        signOut={signOut}
+      />
+      {error && (
+        <div className="bg-red-100 dark:bg-red-800 text-red-700 dark:text-red-200 border border-red-400 px-4 py-3 rounded mb-4">
+          {error}
         </div>
-
-        <div className="grid grid-cols-2 gap-4 mb-8">
+      )}
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="w-full md:w-2/3">
+          <GameList
+            games={games}
+            picks={picks}
+            currentUser={currentUser}
+            makePick={(gameId, teamId) =>
+              makePick(
+                supabase,
+                gameId,
+                teamId,
+                currentUser,
+                currentWeek,
+                setPicks,
+                setError
+              )
+            }
+            formatGameTime={formatGameTime}
+            getTeamLogo={getTeamLogo}
+            calculatePotentialPoints={calculatePotentialPoints}
+          />
+        </div>
+        <div className="w-full md:w-1/3 space-y-4">
+          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg font-mono text-center">
+            <div className="text-sm mb-1 dark:text-white">
+              Time until first game:
+            </div>
+            <div className="text-xl dark:text-white">{timeRemaining}</div>
+          </div>
           <WeekPicks
             currentWeek={currentWeek}
             users={users}
@@ -200,32 +207,11 @@ export default function Home() {
           />
           <Leaderboard users={users} />
         </div>
-
-        <GameList
-          games={games}
-          picks={picks}
-          currentUser={currentUser}
-          makePick={(gameId, teamId) =>
-            makePick(
-              supabase,
-              gameId,
-              teamId,
-              currentUser,
-              currentWeek,
-              setPicks,
-              setError
-            )
-          }
-          formatGameTime={formatGameTime}
-          getTeamLogo={getTeamLogo}
-          calculatePotentialPoints={calculatePotentialPoints}
-        />
-
-        <div className="mt-8 text-xs text-gray-500 dark:text-gray-400">
-          <h3 className="font-bold mb-1">Debug Info:</h3>
-          <p>Number of games: {games.length}</p>
-          <p>Current Week: {currentWeek}</p>
-        </div>
+      </div>
+      <div className="mt-8 text-xs text-gray-500 dark:text-gray-400">
+        <h3 className="font-bold mb-1">Debug Info:</h3>
+        <p>Number of games: {games.length}</p>
+        <p>Current Week: {currentWeek}</p>
       </div>
     </div>
   );
