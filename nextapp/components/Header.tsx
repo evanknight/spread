@@ -2,13 +2,19 @@ import React from "react";
 import { Menu } from "@headlessui/react";
 import { EllipsisHorizontalIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
+import { User } from "@/types/types";
 
 interface HeaderProps {
-  fetchGamesFromAPI: () => void;
-  signOut: () => void;
+  currentUser: User | null;
+  signOut: () => Promise<void>;
+  fetchGamesFromAPI: () => Promise<void>;
 }
 
-const Header: React.FC<HeaderProps> = ({ fetchGamesFromAPI, signOut }) => {
+const Header: React.FC<HeaderProps> = ({
+  currentUser,
+  signOut,
+  fetchGamesFromAPI,
+}) => {
   return (
     <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
       <div className="container mx-auto px-4 py-2 flex justify-between items-center">
@@ -29,6 +35,7 @@ const Header: React.FC<HeaderProps> = ({ fetchGamesFromAPI, signOut }) => {
           />
         </div>
         <div className="flex items-center space-x-4">
+          {currentUser && <span>Welcome, {currentUser.name}</span>}
           <Menu as="div" className="relative inline-block text-left">
             <Menu.Button className="inline-flex justify-center w-full px-4 py-2 text-sm font-medium text-gray-700 bg-white dark:bg-gray-800 rounded-xl border border-slate-200 hover:bg-gray-50 dark:hover:bg-gray-700">
               <EllipsisHorizontalIcon
@@ -36,7 +43,7 @@ const Header: React.FC<HeaderProps> = ({ fetchGamesFromAPI, signOut }) => {
                 aria-hidden="true"
               />
             </Menu.Button>
-            <Menu.Items className="absolute right-0 w-56 mt-2 origin-top-right bg-white dark:bg-gray-800 divide-y divide-gray-100 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+            <Menu.Items className="absolute right-0 mt-2 w-56 origin-top-right divide-y divide-gray-100 rounded-md bg-white dark:bg-gray-800 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
               <div className="px-1 py-1">
                 <Menu.Item>
                   {({ active }) => (
@@ -48,7 +55,7 @@ const Header: React.FC<HeaderProps> = ({ fetchGamesFromAPI, signOut }) => {
                           : "text-gray-900 dark:text-gray-300"
                       } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
                     >
-                      Fetch Games from API
+                      Fetch Games
                     </button>
                   )}
                 </Menu.Item>
