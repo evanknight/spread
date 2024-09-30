@@ -104,10 +104,7 @@ export async function POST() {
     return NextResponse.json(updatedGames);
   } catch (error) {
     console.error("Error updating games:", error);
-    return NextResponse.json(
-      { error: "Failed to update games" },
-      { status: 500 }
-    );
+    return NextResponse.json([], { status: 500 }); // Return an empty array on error
   }
 }
 

@@ -184,6 +184,8 @@ export const fetchGamesFromAPI = async (
     }
     const result = await response.json();
 
+    console.log("API response:", result); // Log the entire response
+
     if (!Array.isArray(result)) {
       console.error("API response is not an array:", result);
       throw new Error("Invalid response format from API");
@@ -195,6 +197,8 @@ export const fetchGamesFromAPI = async (
       const week = calculateNFLWeek(gameDate);
       return { ...game, week };
     });
+
+    console.log("Updated games:", updatedGames); // Log the updated games
 
     // Update games in the database with the correct week
     const { error } = await supabase
