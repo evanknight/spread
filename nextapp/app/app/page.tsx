@@ -174,7 +174,9 @@ export default function Home() {
       <div className="flex flex-col md:flex-row gap-4">
         <div className="w-full md:w-1/3 order-1 md:order-2 space-y-4">
           <div className="bg-white dark:bg-gray-800 p-4 rounded-lg font-mono text-center">
-            <div className="text-sm mb-1 dark:text-white">Time until first game:</div>
+            <div className="text-sm mb-1 dark:text-white">
+              Time until first game:
+            </div>
             <div className="text-xl dark:text-white">{timeRemaining}</div>
           </div>
           <WeekPicks
@@ -216,3 +218,4 @@ export default function Home() {
       </div>
     </div>
   );
+}
