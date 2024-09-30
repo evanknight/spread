@@ -1,5 +1,3 @@
-const path = require('path');
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -25,10 +23,6 @@ const nextConfig = {
         hostname: 'localhost',
       },
     ],
-  },
-  webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
-    config.resolve.alias['@'] = path.join(__dirname, '.');
-    return config;
   },
 }
 
