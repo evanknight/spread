@@ -20,7 +20,7 @@ const WeekPicks: React.FC<WeekPicksProps> = ({
   calculatePotentialPoints,
 }) => {
   const renderWeekPicks = (week: number) => (
-    <div className="mb-4">
+    <div className="bg-white dark:bg-gray-800 p-4 rounded shadow mb-4">
       <h3 className="text-lg font-semibold mb-2 dark:text-white">
         Week {week} Picks
       </h3>
@@ -36,9 +36,7 @@ const WeekPicks: React.FC<WeekPicksProps> = ({
 
         return (
           <div key={`${user.id}-${week}`} className="mb-2">
-            <span className="font-bold text-sm dark:text-white">
-              {user.name}:
-            </span>
+            <span className="text-sm dark:text-white">{user.name}:</span>
             {pickedTeam && (
               <div className="flex items-center mt-1">
                 <Image
@@ -49,7 +47,7 @@ const WeekPicks: React.FC<WeekPicksProps> = ({
                   className="mr-2"
                 />
                 <div className="text-sm dark:text-white">
-                  <span className="font-bold">{pickedTeam.name}</span>
+                  {pickedTeam.name.split(" ").pop()}
                 </div>
                 <div className="ml-auto text-right text-sm dark:text-white">
                   {calculatePotentialPoints(
@@ -68,10 +66,10 @@ const WeekPicks: React.FC<WeekPicksProps> = ({
   );
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-4 rounded shadow">
-      {renderWeekPicks(currentWeek - 1)}
+    <>
       {renderWeekPicks(currentWeek)}
-    </div>
+      {renderWeekPicks(currentWeek - 1)}
+    </>
   );
 };
 

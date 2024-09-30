@@ -182,7 +182,22 @@ export const fetchGamesFromAPI = async (
     if (!response.ok) {
       throw new Error("Failed to fetch games from API");
     }
-    await response.json();
+    const games = await response.json();
+
+    // Calculate and set the week for each game
+    const updatedGames = games.map((game: Game) => {
+      const gameDate = new Date(game.commence_time);
+      const week = calculateNFLWeek(gameDate);
+      return { ...game, week };
+    });
+
+    // Update games in the database with the correct week
+    const { error } = await supabase
+      .from("games")
+      .upsert(updatedGames, { onConflict: "id" });
+
+    if (error) throw error;
+
     await fetchGames(supabase, currentWeek, setGames, setError);
     setIsLoading(false);
   } catch (err) {
@@ -191,3 +206,11 @@ export const fetchGamesFromAPI = async (
     setIsLoading(false);
   }
 };
+
+// Helper function to calculate NFL week
+function calculateNFLWeek(date: Date): number {
+  const nflSeasonStart = new Date(2024, 8, 5); // September 5, 2024 (Thursday)
+  const timeDiff = date.getTime() - nflSeasonStart.getTime();
+  const daysDiff = Math.floor(timeDiff / (1000 * 3600 * 24));
+  return Math.floor(daysDiff / 7) + 1;
+}
