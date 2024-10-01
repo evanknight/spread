@@ -92,7 +92,7 @@ const GameList: React.FC<GameListProps> = ({
                   {formatGameTime(game.commence_time)}
                 </span>
               </div>
-              <div className="flex justify-between items-center">
+              <div className="hidden lg:flex justify-between items-center">
                 <div className="flex items-center w-5/12">
                   <Image
                     src={getTeamLogo(game.away_team.name)}
@@ -123,7 +123,35 @@ const GameList: React.FC<GameListProps> = ({
                   <SpreadChip spread={game.home_spread} />
                 </div>
               </div>
-              <div className="flex justify-between mt-2">
+              <div className="lg:hidden">
+                <div className="flex items-center mb-2">
+                  <Image
+                    src={getTeamLogo(game.away_team.name)}
+                    alt={game.away_team.name}
+                    width={32}
+                    height={32}
+                    className="mr-2"
+                  />
+                  <span className="text-base text-black dark:text-white">
+                    {game.away_team.name}
+                  </span>
+                  <SpreadChip spread={game.away_spread} />
+                </div>
+                <div className="flex items-center">
+                  <Image
+                    src={getTeamLogo(game.home_team.name)}
+                    alt={game.home_team.name}
+                    width={32}
+                    height={32}
+                    className="mr-2"
+                  />
+                  <span className="text-base text-black dark:text-white">
+                    {game.home_team.name}
+                  </span>
+                  <SpreadChip spread={game.home_spread} />
+                </div>
+              </div>
+              <div className="flex flex-col lg:flex-row justify-between mt-2">
                 {new Date(game.commence_time) < new Date() ? (
                   userPick && (
                     <div className="w-full text-center text-gray-600 dark:text-gray-300">
@@ -141,7 +169,7 @@ const GameList: React.FC<GameListProps> = ({
                   <>
                     <button
                       onClick={() => makePick(game.id, game.away_team.id, week)}
-                      className={`px-4 py-2 rounded-full transition-colors duration-200 ${
+                      className={`px-4 py-2 rounded-full transition-colors duration-200 mb-2 lg:mb-0 ${
                         awayTeamPicked
                           ? "bg-blue-500 text-white"
                           : "bg-white text-blue-500 border border-blue-500 hover:bg-blue-500 hover:text-white"
