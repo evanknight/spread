@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Game, User, Pick } from "@/types/types";
 import WeekCountdown from "./WeekCountdown";
 import Image from "next/image";
+import { FiLock } from "react-icons/fi";
 
 interface GameListProps {
   games: Game[];
@@ -80,47 +81,77 @@ const GameList: React.FC<GameListProps> = ({
       ((isHome && selectedTeam === "home") ||
         (!isHome && selectedTeam === "away"));
 
+    // Extract city name and team name
+    const nameParts = team.name.split(" ");
+    const teamName = nameParts.pop() || "";
+    const cityName = nameParts.join(" ");
+
     return (
       <div
-        className={`bg-white dark:bg-gray-800 p-4 rounded-lg border ${
+        className={`relative bg-white dark:bg-gray-800 p-4 rounded-xl border ${
           isPicked
             ? "border-blue-500 dark:border-blue-400"
             : "border-gray-200 dark:border-gray-700"
-        } hover:border-gray-300 dark:hover:border-gray-600 transition-colors cursor-pointer`}
+        } hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer group`}
         onClick={() => handlePick(game, isHome ? "home" : "away")}
       >
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center">
+        {/* Lock Emoji on Hover (desktop only) */}
+        <div className="absolute bottom-2 right-2 hidden group-hover:block">
+          <FiLock className="text-gray-400" />
+        </div>
+
+        {/* Spread chip for mobile only */}
+        <span
+          className={`absolute top-2 right-2 px-2 py-1 text-sm rounded-full md:hidden ${
+            spread > 0
+              ? "bg-green-100 text-green-600 dark:bg-green-800 dark:text-green-100"
+              : "bg-red-100 text-red-600 dark:bg-red-800 dark:text-red-100"
+          }`}
+        >
+          {spread > 0 ? `+${spread}` : spread}
+        </span>
+
+        <div className="flex md:flex-row flex-col md:items-center items-center justify-center md:justify-between">
+          {/* Team logo and info (centered on mobile) */}
+          <div className="flex items-center justify-center md:justify-start mb-2 md:mb-0">
             <Image
               src={getTeamLogo(team.name)}
               alt={team.name}
               width={48}
               height={48}
-              className="mr-4"
+              className="mr-2"
             />
-            <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                {team.city}
+            <div className="text-center md:text-left">
+              {/* Show city name on desktop only */}
+              <p className="text-sm text-gray-500 dark:text-gray-400 md:block hidden">
+                {cityName}
               </p>
-              <h3 className="text-lg font-bold dark:text-white">
-                {team.name.split(" ").pop()}
-              </h3>
+              <h3 className="text-lg font-bold dark:text-white">{teamName}</h3>
             </div>
           </div>
-          <div>
+
+          {/* Spread chip and points (desktop layout) */}
+          <div className="hidden md:flex items-center space-x-2">
             <span
-              className={`text-sm font-semibold ${
-                spread > 0 ? "text-red-500" : "text-green-500"
+              className={`px-2 py-1 text-sm rounded-full ${
+                spread > 0
+                  ? "bg-green-100 text-green-600 dark:bg-green-800 dark:text-green-100"
+                  : "bg-red-100 text-red-600 dark:bg-red-800 dark:text-red-100"
               }`}
             >
               {spread > 0 ? `+${spread}` : spread}
             </span>
+            <span className="text-lg font-bold dark:text-white">
+              {points} pts
+            </span>
           </div>
-        </div>
-        <div className="text-right">
-          <span className="text-xl font-bold dark:text-white">
-            {points} pts
-          </span>
+
+          {/* Spread chip and points (mobile layout, centered) */}
+          <div className="md:hidden flex flex-col items-center">
+            <span className="text-xl font-bold dark:text-white">
+              {points} pts
+            </span>
+          </div>
         </div>
       </div>
     );
@@ -138,21 +169,31 @@ const GameList: React.FC<GameListProps> = ({
         <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">
           {formatGameTime(game.commence_time)}
         </div>
+
         {isGameSelected ? (
           <>
             {renderTeamCard(game, selectedTeam === "home")}
-            <button
-              onClick={handleCancelPick}
-              className="w-full mt-4 bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 transition-colors"
-            >
-              Cancel Pick
-            </button>
+
+            {/* My Week # Lock inside the card */}
+            <div className="text-center mb-4 text-lg font-bold text-blue-500 flex items-center justify-center">
+              <FiLock className="mr-1" /> My Week {currentWeek} Lock
+            </div>
+
+            {/* Cancel pick button (inside the card) */}
+            <div className="text-center mt-4">
+              <button
+                onClick={handleCancelPick}
+                className="bg-red-500 text-white py-2 px-4 rounded-xl hover:bg-red-600 transition-colors"
+              >
+                Cancel Pick
+              </button>
+            </div>
           </>
         ) : (
-          <div className="grid grid-cols-[1fr,auto,1fr] gap-2 items-center">
+          <div className="grid grid-cols-[1fr,auto,1fr] gap-4 items-center">
             {renderTeamCard(game, false)}
-            <span className="text-2xl font-bold text-center dark:text-white">
-              VS
+            <span className="text-lg font-bold text-center dark:text-white">
+              vs.
             </span>
             {renderTeamCard(game, true)}
           </div>
@@ -163,10 +204,14 @@ const GameList: React.FC<GameListProps> = ({
 
   return (
     <>
-      <h2 className="text-2xl font-bold mb-4 dark:text-white">
-        Week {currentWeek} Games
-      </h2>
-      <WeekCountdown firstGameTime={getFirstGameTime(games)} />
+      <div className="flex flex-col md:flex-row justify-between items-center mb-4">
+        <h2 className="text-2xl font-bold dark:text-white">
+          Week {currentWeek} Games
+        </h2>
+        <div className="mt-2 md:mt-0">
+          <WeekCountdown firstGameTime={getFirstGameTime(games)} />
+        </div>
+      </div>
       {games.map((game) => renderGameCard(game))}
     </>
   );
