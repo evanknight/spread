@@ -209,7 +209,10 @@ const GameList: React.FC<GameListProps> = ({
           Week {currentWeek} Games
         </h2>
         <div className="mt-2 md:mt-0">
-          <WeekCountdown firstGameTime={getFirstGameTime(games)} />
+          <WeekCountdown
+            firstGameTime={getFirstGameTime(games)}
+            currentWeek={currentWeek}
+          />
         </div>
       </div>
       {games.map((game) => renderGameCard(game))}
