@@ -33,6 +33,20 @@ const GameList: React.FC<GameListProps> = ({
     return fullName.split(" ").pop() || "";
   };
 
+  const SpreadChip: React.FC<{ spread: number }> = ({ spread }) => {
+    const isPositive = spread > 0;
+    const bgColor = isPositive ? "bg-green-100" : "bg-red-100";
+    const textColor = isPositive ? "text-green-800" : "text-red-800";
+    return (
+      <span
+        className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${bgColor} ${textColor} ml-2`}
+      >
+        {isPositive ? "+" : ""}
+        {spread}
+      </span>
+    );
+  };
+
   const renderWeekGames = (week: number) => {
     const weekGames = games.filter((game) => game.week === week);
 
@@ -77,20 +91,20 @@ const GameList: React.FC<GameListProps> = ({
                 <span className="text-sm text-gray-500 dark:text-gray-400">
                   {formatGameTime(game.commence_time)}
                 </span>
-                <span className="text-sm text-gray-500 dark:text-gray-400">
-                  Spread: {game.home_spread}
-                </span>
               </div>
               <div className="flex justify-between items-center">
                 <div className="flex items-center w-5/12">
                   <Image
                     src={getTeamLogo(game.away_team.name)}
                     alt={game.away_team.name}
-                    width={32}
-                    height={32}
+                    width={40}
+                    height={40}
                     className="mr-2"
                   />
-                  <span className="dark:text-white">{game.away_team.name}</span>
+                  <span className="text-lg text-black dark:text-white">
+                    {game.away_team.name}
+                  </span>
+                  <SpreadChip spread={game.away_spread} />
                 </div>
                 <div className="w-2/12 text-center">
                   <span className="text-sm dark:text-white">@</span>
@@ -99,11 +113,14 @@ const GameList: React.FC<GameListProps> = ({
                   <Image
                     src={getTeamLogo(game.home_team.name)}
                     alt={game.home_team.name}
-                    width={32}
-                    height={32}
+                    width={40}
+                    height={40}
                     className="mr-2"
                   />
-                  <span className="dark:text-white">{game.home_team.name}</span>
+                  <span className="text-lg text-black dark:text-white">
+                    {game.home_team.name}
+                  </span>
+                  <SpreadChip spread={game.home_spread} />
                 </div>
               </div>
               <div className="flex justify-between mt-2">
@@ -123,19 +140,6 @@ const GameList: React.FC<GameListProps> = ({
                 ) : (
                   <>
                     <button
-                      onClick={() => makePick(game.id, game.home_team.id, week)}
-                      className={`px-4 py-2 rounded-full transition-colors duration-200 ${
-                        homeTeamPicked
-                          ? "bg-blue-500 text-white"
-                          : "bg-white text-blue-500 border border-blue-500 hover:bg-blue-500 hover:text-white"
-                      }`}
-                      disabled={!!userPick}
-                    >
-                      {homeTeamPicked ? "Locked" : "Lock"}{" "}
-                      {getTeamNameOnly(game.home_team.name)} (
-                      {calculatePotentialPoints(game, true)}pt)
-                    </button>
-                    <button
                       onClick={() => makePick(game.id, game.away_team.id, week)}
                       className={`px-4 py-2 rounded-full transition-colors duration-200 ${
                         awayTeamPicked
@@ -144,9 +148,26 @@ const GameList: React.FC<GameListProps> = ({
                       }`}
                       disabled={!!userPick}
                     >
-                      {awayTeamPicked ? "Locked" : "Lock"}{" "}
-                      {getTeamNameOnly(game.away_team.name)} (
-                      {calculatePotentialPoints(game, false)}pt)
+                      <span className="text-sm">
+                        {awayTeamPicked ? "Locked" : "Lock"}{" "}
+                        {getTeamNameOnly(game.away_team.name)} (
+                        {calculatePotentialPoints(game, false)}pt)
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => makePick(game.id, game.home_team.id, week)}
+                      className={`px-4 py-2 rounded-full transition-colors duration-200 ${
+                        homeTeamPicked
+                          ? "bg-blue-500 text-white"
+                          : "bg-white text-blue-500 border border-blue-500 hover:bg-blue-500 hover:text-white"
+                      }`}
+                      disabled={!!userPick}
+                    >
+                      <span className="text-sm">
+                        {homeTeamPicked ? "Locked" : "Lock"}{" "}
+                        {getTeamNameOnly(game.home_team.name)} (
+                        {calculatePotentialPoints(game, true)}pt)
+                      </span>
                     </button>
                   </>
                 )}
