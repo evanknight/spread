@@ -6,7 +6,9 @@ interface LeaderboardProps {
 }
 
 const Leaderboard: React.FC<LeaderboardProps> = ({ users }) => {
-  const sortedUsers = [...users].sort((a, b) => b.points - a.points);
+  const sortedUsers = [...users].sort(
+    (a, b) => b.total_points - a.total_points
+  );
 
   return (
     <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-slate-200 dark:border-gray-700">
@@ -28,7 +30,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users }) => {
               <td className="py-2 text-sm dark:text-gray-300">{index + 1}</td>
               <td className="py-2 text-sm dark:text-white">{user.name}</td>
               <td className="py-2 text-right text-sm dark:text-white">
-                {user.points}
+                {user.total_points}
               </td>
             </tr>
           ))}

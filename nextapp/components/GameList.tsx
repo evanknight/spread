@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Game, User, Pick } from "@/types/types";
 import WeekCountdown from "./WeekCountdown";
 import Image from "next/image";
@@ -12,6 +12,7 @@ interface GameListProps {
   getTeamLogo: (teamName: string) => string;
   calculatePotentialPoints: (game: Game, isHomeTeam: boolean) => number;
   currentWeek: number;
+  apiWeek: number;
 }
 
 const GameList: React.FC<GameListProps> = ({
@@ -23,194 +24,150 @@ const GameList: React.FC<GameListProps> = ({
   getTeamLogo,
   calculatePotentialPoints,
   currentWeek,
+  apiWeek,
 }) => {
+  const [selectedGame, setSelectedGame] = useState<Game | null>(null);
+  const [selectedTeam, setSelectedTeam] = useState<"home" | "away" | null>(
+    null
+  );
+
+  useEffect(() => {
+    if (currentUser && picks.length > 0) {
+      const userPick = picks.find(
+        (p) => p.user_id === currentUser.id && p.week === apiWeek
+      );
+      if (userPick) {
+        const pickedGame = games.find((g) => g.id === userPick.game_id);
+        if (pickedGame) {
+          setSelectedGame(pickedGame);
+          setSelectedTeam(
+            userPick.team_picked === pickedGame.home_team.id ? "home" : "away"
+          );
+        }
+      } else {
+        setSelectedGame(null);
+        setSelectedTeam(null);
+      }
+    }
+  }, [currentUser, picks, games, apiWeek]);
+
   const getFirstGameTime = (weekGames: Game[]): Date => {
     if (weekGames.length === 0) return new Date();
     return new Date(weekGames[0].commence_time);
   };
 
-  const getTeamNameOnly = (fullName: string) => {
-    return fullName.split(" ").pop() || "";
+  const handlePick = (game: Game, teamType: "home" | "away") => {
+    const teamId = teamType === "home" ? game.home_team.id : game.away_team.id;
+    makePick(game.id, teamId, apiWeek); // Use apiWeek instead of currentWeek
+    setSelectedGame(game);
+    setSelectedTeam(teamType);
   };
 
-  const SpreadChip: React.FC<{ spread: number }> = ({ spread }) => {
-    const isPositive = spread > 0;
-    const bgColor = isPositive ? "bg-green-100" : "bg-red-100";
-    const textColor = isPositive ? "text-green-800" : "text-red-800";
-    return (
-      <span
-        className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${bgColor} ${textColor} ml-2`}
-      >
-        {isPositive ? "+" : ""}
-        {spread}
-      </span>
-    );
-  };
-
-  const renderWeekGames = (week: number) => {
-    const weekGames = games.filter((game) => game.week === week);
-
-    if (weekGames.length === 0) {
-      return null;
+  const handleCancelPick = () => {
+    if (selectedGame) {
+      makePick(selectedGame.id, 0, apiWeek); // Use apiWeek instead of currentWeek
+      setSelectedGame(null);
+      setSelectedTeam(null);
     }
+  };
 
-    const isCurrentWeek = week === currentWeek;
+  const renderTeamCard = (game: Game, isHome: boolean) => {
+    const team = isHome ? game.home_team : game.away_team;
+    const spread = isHome ? game.home_spread : game.away_spread;
+    const points = calculatePotentialPoints(game, isHome);
+    const isPicked =
+      selectedGame?.id === game.id &&
+      ((isHome && selectedTeam === "home") ||
+        (!isHome && selectedTeam === "away"));
 
     return (
       <div
-        key={week}
-        className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-slate-200 dark:border-gray-700 shadow-lg dark:shadow-none mb-4"
+        className={`bg-white dark:bg-gray-800 p-4 rounded-lg border ${
+          isPicked
+            ? "border-blue-500 dark:border-blue-400"
+            : "border-gray-200 dark:border-gray-700"
+        } hover:border-gray-300 dark:hover:border-gray-600 transition-colors cursor-pointer`}
+        onClick={() => handlePick(game, isHome ? "home" : "away")}
       >
-        <h2 className="text-2xl font-bold mb-4 dark:text-white">
-          Week {week} Games
-        </h2>
-        {isCurrentWeek ? (
-          <div className="text-gray-600 dark:text-gray-300 mb-4">
-            Games in progress, picks are locked.
-          </div>
-        ) : (
-          <WeekCountdown
-            currentWeek={week}
-            firstGameTime={getFirstGameTime(weekGames)}
-          />
-        )}
-        {weekGames.map((game) => {
-          const userPick = picks.find(
-            (pick) =>
-              pick.game_id === game.id && pick.user_id === currentUser?.id
-          );
-          const homeTeamPicked = userPick?.team_picked === game.home_team.id;
-          const awayTeamPicked = userPick?.team_picked === game.away_team.id;
-
-          return (
-            <div
-              key={game.id}
-              className="border-b border-gray-200 dark:border-gray-700 py-4 last:border-b-0"
-            >
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm text-gray-500 dark:text-gray-400">
-                  {formatGameTime(game.commence_time)}
-                </span>
-              </div>
-              <div className="hidden lg:flex justify-between items-center">
-                <div className="flex items-center w-5/12">
-                  <Image
-                    src={getTeamLogo(game.away_team.name)}
-                    alt={game.away_team.name}
-                    width={40}
-                    height={40}
-                    className="mr-2"
-                  />
-                  <span className="text-lg text-black dark:text-white">
-                    {game.away_team.name}
-                  </span>
-                  <SpreadChip spread={game.away_spread} />
-                </div>
-                <div className="w-2/12 text-center">
-                  <span className="text-sm dark:text-white">@</span>
-                </div>
-                <div className="flex items-center justify-end w-5/12">
-                  <Image
-                    src={getTeamLogo(game.home_team.name)}
-                    alt={game.home_team.name}
-                    width={40}
-                    height={40}
-                    className="mr-2"
-                  />
-                  <span className="text-lg text-black dark:text-white">
-                    {game.home_team.name}
-                  </span>
-                  <SpreadChip spread={game.home_spread} />
-                </div>
-              </div>
-              <div className="lg:hidden">
-                <div className="flex items-center mb-2">
-                  <Image
-                    src={getTeamLogo(game.away_team.name)}
-                    alt={game.away_team.name}
-                    width={32}
-                    height={32}
-                    className="mr-2"
-                  />
-                  <span className="text-base text-black dark:text-white">
-                    {game.away_team.name}
-                  </span>
-                  <SpreadChip spread={game.away_spread} />
-                </div>
-                <div className="flex items-center">
-                  <Image
-                    src={getTeamLogo(game.home_team.name)}
-                    alt={game.home_team.name}
-                    width={32}
-                    height={32}
-                    className="mr-2"
-                  />
-                  <span className="text-base text-black dark:text-white">
-                    {game.home_team.name}
-                  </span>
-                  <SpreadChip spread={game.home_spread} />
-                </div>
-              </div>
-              <div className="flex flex-col lg:flex-row justify-between mt-2">
-                {new Date(game.commence_time) < new Date() ? (
-                  userPick && (
-                    <div className="w-full text-center text-gray-600 dark:text-gray-300">
-                      {homeTeamPicked &&
-                        `Locked ${getTeamNameOnly(
-                          game.home_team.name
-                        )} (${calculatePotentialPoints(game, true)}pt)`}
-                      {awayTeamPicked &&
-                        `Locked ${getTeamNameOnly(
-                          game.away_team.name
-                        )} (${calculatePotentialPoints(game, false)}pt)`}
-                    </div>
-                  )
-                ) : (
-                  <>
-                    <button
-                      onClick={() => makePick(game.id, game.away_team.id, week)}
-                      className={`px-4 py-2 rounded-full transition-colors duration-200 mb-2 lg:mb-0 ${
-                        awayTeamPicked
-                          ? "bg-blue-500 text-white dark:bg-blue-600 dark:text-white"
-                          : "bg-white text-blue-500 border border-blue-500 hover:bg-blue-500 hover:text-white dark:bg-transparent dark:text-blue-400 dark:border-blue-400 dark:hover:bg-blue-600 dark:hover:text-white"
-                      }`}
-                      disabled={!!userPick}
-                    >
-                      <span className="text-sm">
-                        {awayTeamPicked ? "Locked" : "Lock"}{" "}
-                        {getTeamNameOnly(game.away_team.name)} (
-                        {calculatePotentialPoints(game, false)}pt)
-                      </span>
-                    </button>
-                    <button
-                      onClick={() => makePick(game.id, game.home_team.id, week)}
-                      className={`px-4 py-2 rounded-full transition-colors duration-200 ${
-                        homeTeamPicked
-                          ? "bg-blue-500 text-white dark:bg-blue-600 dark:text-white"
-                          : "bg-white text-blue-500 border border-blue-500 hover:bg-blue-500 hover:text-white dark:bg-transparent dark:text-blue-400 dark:border-blue-400 dark:hover:bg-blue-600 dark:hover:text-white"
-                      }`}
-                      disabled={!!userPick}
-                    >
-                      <span className="text-sm">
-                        {homeTeamPicked ? "Locked" : "Lock"}{" "}
-                        {getTeamNameOnly(game.home_team.name)} (
-                        {calculatePotentialPoints(game, true)}pt)
-                      </span>
-                    </button>
-                  </>
-                )}
-              </div>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center">
+            <Image
+              src={getTeamLogo(team.name)}
+              alt={team.name}
+              width={48}
+              height={48}
+              className="mr-4"
+            />
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {team.city}
+              </p>
+              <h3 className="text-lg font-bold dark:text-white">
+                {team.name.split(" ").pop()}
+              </h3>
             </div>
-          );
-        })}
+          </div>
+          <div>
+            <span
+              className={`text-sm font-semibold ${
+                spread > 0 ? "text-red-500" : "text-green-500"
+              }`}
+            >
+              {spread > 0 ? `+${spread}` : spread}
+            </span>
+          </div>
+        </div>
+        <div className="text-right">
+          <span className="text-xl font-bold dark:text-white">
+            {points} pts
+          </span>
+        </div>
+      </div>
+    );
+  };
+
+  const renderGameCard = (game: Game) => {
+    const isGameSelected = selectedGame?.id === game.id;
+
+    if (selectedGame && !isGameSelected) {
+      return null;
+    }
+
+    return (
+      <div key={game.id} className="mb-8">
+        <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+          {formatGameTime(game.commence_time)}
+        </div>
+        {isGameSelected ? (
+          <>
+            {renderTeamCard(game, selectedTeam === "home")}
+            <button
+              onClick={handleCancelPick}
+              className="w-full mt-4 bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 transition-colors"
+            >
+              Cancel Pick
+            </button>
+          </>
+        ) : (
+          <div className="grid grid-cols-[1fr,auto,1fr] gap-2 items-center">
+            {renderTeamCard(game, false)}
+            <span className="text-2xl font-bold text-center dark:text-white">
+              VS
+            </span>
+            {renderTeamCard(game, true)}
+          </div>
+        )}
       </div>
     );
   };
 
   return (
     <>
-      {renderWeekGames(currentWeek)}
-      {renderWeekGames(currentWeek + 1)}
+      <h2 className="text-2xl font-bold mb-4 dark:text-white">
+        Week {currentWeek} Games
+      </h2>
+      <WeekCountdown firstGameTime={getFirstGameTime(games)} />
+      {games.map((game) => renderGameCard(game))}
     </>
   );
 };

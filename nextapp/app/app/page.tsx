@@ -14,6 +14,8 @@ import {
   fetchPicks,
   fetchGamesFromAPI,
   calculateNFLWeek,
+  mapAPIWeekToNFLWeek,
+  mapNFLWeekToAPIWeek,
 } from "@/utils/dataFetchers";
 import {
   formatGameTime,
@@ -29,7 +31,10 @@ export default function Home() {
   const [picks, setPicks] = useState<Pick[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [currentWeek, setCurrentWeek] = useState(calculateNFLWeek(new Date()));
+  const [currentNFLWeek, setCurrentNFLWeek] = useState(calculateNFLWeek());
+  const [currentAPIWeek, setCurrentAPIWeek] = useState(
+    mapNFLWeekToAPIWeek(calculateNFLWeek())
+  );
 
   const router = useRouter();
 
@@ -115,14 +120,12 @@ export default function Home() {
     const loadData = async () => {
       setIsLoading(true);
       try {
-        const currentWeekGames = await fetchGames(supabase, currentWeek);
-        const nextWeekGames = await fetchGames(supabase, currentWeek + 1);
-        setGames([...currentWeekGames, ...nextWeekGames]);
+        const currentWeekGames = await fetchGames(supabase, currentAPIWeek);
+        setGames(currentWeekGames);
         const usersData = await fetchUsers(supabase);
         setUsers(usersData);
-        const picksData = await fetchPicks(supabase, currentWeek);
-        const nextWeekPicksData = await fetchPicks(supabase, currentWeek + 1);
-        setPicks([...picksData, ...nextWeekPicksData]);
+        const picksData = await fetchPicks(supabase, currentAPIWeek);
+        setPicks(picksData);
       } catch (err) {
         console.error("Error loading data:", err);
         setError("Failed to load data");
@@ -132,7 +135,7 @@ export default function Home() {
     };
 
     loadData();
-  }, [currentWeek]);
+  }, [currentAPIWeek]);
 
   const handleMakePick = async (
     gameId: number,
@@ -142,13 +145,22 @@ export default function Home() {
     if (!currentUser) return;
 
     try {
-      // Remove any existing pick for this week
-      const { error: deleteError } = await supabase
-        .from("picks")
-        .delete()
-        .match({ user_id: currentUser.id, week: week });
+      if (teamId === 0) {
+        // If teamId is 0, it means we're cancelling the pick
+        const { error: deleteError } = await supabase
+          .from("picks")
+          .delete()
+          .match({ user_id: currentUser.id, game_id: gameId });
 
-      if (deleteError) throw deleteError;
+        if (deleteError) throw deleteError;
+
+        setPicks((prevPicks) =>
+          prevPicks.filter(
+            (p) => p.user_id !== currentUser.id || p.game_id !== gameId
+          )
+        );
+        return;
+      }
 
       // Get the current spread for the game
       const { data: gameData, error: gameError } = await supabase
@@ -164,29 +176,34 @@ export default function Home() {
           ? gameData.home_spread
           : gameData.away_spread;
 
-      // Insert the new pick
+      // Upsert the pick (insert if not exists, update if exists)
       const { data, error } = await supabase
         .from("picks")
-        .insert({
-          user_id: currentUser.id,
-          game_id: gameId,
-          team_picked: teamId,
-          week: week,
-          spread_at_time: spread,
-        })
+        .upsert(
+          {
+            user_id: currentUser.id,
+            game_id: gameId,
+            team_picked: teamId,
+            week: currentAPIWeek,
+            spread_at_time: spread,
+          },
+          { onConflict: "user_id,game_id" }
+        )
         .select();
 
       if (error) throw error;
 
+      const newPick = data[0];
+
       // Update the picks state with the new pick
       setPicks((prevPicks) => {
         const newPicks = prevPicks.filter(
-          (pick) => pick.week !== week || pick.user_id !== currentUser.id
+          (pick) => pick.game_id !== gameId || pick.user_id !== currentUser.id
         );
-        return [...newPicks, data[0]];
+        return [...newPicks, newPick];
       });
 
-      console.log("Pick saved successfully:", data[0]);
+      console.log("Pick saved successfully:", newPick);
     } catch (error) {
       console.error("Error making pick:", error);
       setError("Failed to make pick");
@@ -196,7 +213,7 @@ export default function Home() {
   const handleFetchGames = async () => {
     try {
       setIsLoading(true);
-      const fetchedGames = await fetchGamesFromAPI(supabase, currentWeek);
+      const fetchedGames = await fetchGamesFromAPI(supabase, currentAPIWeek);
       setGames(fetchedGames);
     } catch (err) {
       console.error("Error fetching games from API:", err);
@@ -231,7 +248,8 @@ export default function Home() {
           <div className="w-full md:w-1/3 order-1 md:order-1 space-y-4">
             <Leaderboard users={users} />
             <WeekPicks
-              currentWeek={currentWeek}
+              currentWeek={currentNFLWeek}
+              apiWeek={currentAPIWeek}
               users={users}
               picks={picks}
               games={games}
@@ -248,14 +266,16 @@ export default function Home() {
               formatGameTime={formatGameTime}
               getTeamLogo={getTeamLogo}
               calculatePotentialPoints={calculatePotentialPoints}
-              currentWeek={currentWeek}
+              currentWeek={currentNFLWeek}
+              apiWeek={currentAPIWeek}
             />
           </div>
         </div>
         <div className="mt-8 text-xs text-gray-500 dark:text-gray-400">
           <h3 className="font-bold mb-1">Debug Info:</h3>
           <p>Number of games: {games.length}</p>
-          <p>Current Week: {currentWeek}</p>
+          <p>Current NFL Week: {currentNFLWeek}</p>
+          <p>Current API Week: {currentAPIWeek}</p>
         </div>
       </div>
     </div>

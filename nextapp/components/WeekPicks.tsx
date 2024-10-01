@@ -4,6 +4,7 @@ import { User, Pick, Game } from "@/types/types";
 
 interface WeekPicksProps {
   currentWeek: number;
+  apiWeek: number; // Add this prop
   users: User[];
   picks: Pick[];
   games: Game[];
@@ -13,15 +14,18 @@ interface WeekPicksProps {
 
 const WeekPicks: React.FC<WeekPicksProps> = ({
   currentWeek,
+  apiWeek, // Add this prop
   users,
   picks,
   games,
   getTeamLogo,
   calculatePotentialPoints,
 }) => {
-  const renderWeekPicks = (week: number, title: string) => (
+  const renderWeekPicks = () => (
     <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-slate-200 dark:border-gray-700 mb-4">
-      <h3 className="text-lg font-semibold mb-2 dark:text-white">{title}</h3>
+      <h3 className="text-lg font-semibold mb-2 dark:text-white">
+        Week {currentWeek} Picks
+      </h3>
       <table className="w-full">
         <thead>
           <tr>
@@ -39,16 +43,18 @@ const WeekPicks: React.FC<WeekPicksProps> = ({
         <tbody>
           {users.map((user, index) => {
             const userPick = picks.find(
-              (p) => p.user_id === user.id && p.week === week
+              (p) => p.user_id === user.id && p.week === apiWeek // Use apiWeek here
             );
             const game = games.find((g) => g.id === userPick?.game_id);
             const pickedTeam =
-              userPick && game && userPick.team_picked === game.home_team.id
-                ? game.home_team
-                : game?.away_team;
+              userPick && game
+                ? userPick.team_picked === game.home_team.id
+                  ? game.home_team
+                  : game.away_team
+                : null;
 
             return (
-              <React.Fragment key={`${user.id}-${week}`}>
+              <React.Fragment key={`${user.id}-${apiWeek}`}>
                 <tr>
                   <td className="py-2 text-sm dark:text-white">{user.name}</td>
                   {pickedTeam && game && userPick ? (
@@ -102,12 +108,7 @@ const WeekPicks: React.FC<WeekPicksProps> = ({
     </div>
   );
 
-  return (
-    <>
-      {renderWeekPicks(currentWeek, `Week ${currentWeek} Picks`)}
-      {renderWeekPicks(currentWeek + 1, "Next Week's Games")}
-    </>
-  );
+  return renderWeekPicks();
 };
 
 export default WeekPicks;
