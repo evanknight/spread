@@ -67,7 +67,7 @@ const WeekPicks: React.FC<WeekPicksProps> = ({
                           </span>
                         </div>
                       </td>
-                      <td className="py-2 text-sm dark:text-white text-right">
+                      <td className="py-2 text-sm dark:text-white text-right pl-2">
                         {calculatePotentialPoints(
                           game,
                           userPick.team_picked === game.home_team.id
@@ -80,7 +80,7 @@ const WeekPicks: React.FC<WeekPicksProps> = ({
                       <td className="py-2 text-sm dark:text-gray-400">
                         No pick
                       </td>
-                      <td className="py-2 text-sm dark:text-gray-400 text-right">
+                      <td className="py-2 text-sm dark:text-gray-400 text-right pl-2">
                         -
                       </td>
                     </>

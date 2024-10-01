@@ -9,7 +9,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users }) => {
   const sortedUsers = [...users].sort((a, b) => b.points - a.points);
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-slate-200">
+    <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-slate-200 dark:border-gray-700">
       <h2 className="text-xl font-bold mb-4 dark:text-white">Leaderboard</h2>
       <table className="w-full">
         <thead>

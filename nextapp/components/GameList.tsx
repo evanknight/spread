@@ -59,7 +59,7 @@ const GameList: React.FC<GameListProps> = ({
     return (
       <div
         key={week}
-        className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-slate-200 shadow-lg mb-4"
+        className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-slate-200 dark:border-gray-700 shadow-lg dark:shadow-none mb-4"
       >
         <h2 className="text-2xl font-bold mb-4 dark:text-white">
           Week {week} Games
@@ -171,8 +171,8 @@ const GameList: React.FC<GameListProps> = ({
                       onClick={() => makePick(game.id, game.away_team.id, week)}
                       className={`px-4 py-2 rounded-full transition-colors duration-200 mb-2 lg:mb-0 ${
                         awayTeamPicked
-                          ? "bg-blue-500 text-white"
-                          : "bg-white text-blue-500 border border-blue-500 hover:bg-blue-500 hover:text-white"
+                          ? "bg-blue-500 text-white dark:bg-blue-600 dark:text-white"
+                          : "bg-white text-blue-500 border border-blue-500 hover:bg-blue-500 hover:text-white dark:bg-transparent dark:text-blue-400 dark:border-blue-400 dark:hover:bg-blue-600 dark:hover:text-white"
                       }`}
                       disabled={!!userPick}
                     >
@@ -186,8 +186,8 @@ const GameList: React.FC<GameListProps> = ({
                       onClick={() => makePick(game.id, game.home_team.id, week)}
                       className={`px-4 py-2 rounded-full transition-colors duration-200 ${
                         homeTeamPicked
-                          ? "bg-blue-500 text-white"
-                          : "bg-white text-blue-500 border border-blue-500 hover:bg-blue-500 hover:text-white"
+                          ? "bg-blue-500 text-white dark:bg-blue-600 dark:text-white"
+                          : "bg-white text-blue-500 border border-blue-500 hover:bg-blue-500 hover:text-white dark:bg-transparent dark:text-blue-400 dark:border-blue-400 dark:hover:bg-blue-600 dark:hover:text-white"
                       }`}
                       disabled={!!userPick}
                     >
