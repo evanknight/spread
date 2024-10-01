@@ -77,6 +77,26 @@ export default function Home() {
     }
   }, [router]);
 
+  const updateUserName = async (newName: string) => {
+    if (!currentUser) return;
+
+    try {
+      const { data, error } = await supabase
+        .from("users")
+        .update({ name: newName })
+        .eq("id", currentUser.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setCurrentUser(data);
+    } catch (err) {
+      console.error("Error updating user name:", err);
+      setError("Failed to update user name");
+    }
+  };
+
   const signOut = async () => {
     try {
       await supabase.auth.signOut();
@@ -101,7 +121,8 @@ export default function Home() {
         const usersData = await fetchUsers(supabase);
         setUsers(usersData);
         const picksData = await fetchPicks(supabase, currentWeek);
-        setPicks(picksData);
+        const nextWeekPicksData = await fetchPicks(supabase, currentWeek + 1);
+        setPicks([...picksData, ...nextWeekPicksData]);
       } catch (err) {
         console.error("Error loading data:", err);
         setError("Failed to load data");
@@ -203,6 +224,7 @@ export default function Home() {
         currentUser={currentUser}
         signOut={signOut}
         fetchGamesFromAPI={handleFetchGames}
+        updateUserName={updateUserName}
       />
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row gap-8">

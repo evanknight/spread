@@ -1,20 +1,30 @@
-import React from "react";
+import React, { useState } from "react";
 import { Menu } from "@headlessui/react";
 import { EllipsisHorizontalIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import { User } from "@/types/types";
+import EditNameModal from "./EditNameModal";
 
 interface HeaderProps {
   currentUser: User | null;
   signOut: () => Promise<void>;
   fetchGamesFromAPI: () => Promise<void>;
+  updateUserName: (newName: string) => Promise<void>;
 }
 
 const Header: React.FC<HeaderProps> = ({
   currentUser,
   signOut,
   fetchGamesFromAPI,
+  updateUserName,
 }) => {
+  const [isEditNameModalOpen, setIsEditNameModalOpen] = useState(false);
+
+  const handleUpdateUserName = async (newName: string) => {
+    await updateUserName(newName);
+    setIsEditNameModalOpen(false);
+  };
+
   return (
     <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
       <div className="container mx-auto px-4 py-2 flex justify-between items-center">
@@ -35,7 +45,9 @@ const Header: React.FC<HeaderProps> = ({
           />
         </div>
         <div className="flex items-center space-x-4">
-          {currentUser && <span>Welcome, {currentUser.name}</span>}
+          {currentUser && (
+            <span className="dark:text-white">Welcome, {currentUser.name}</span>
+          )}
           <Menu as="div" className="relative inline-block text-left">
             <Menu.Button className="inline-flex justify-center w-full px-4 py-2 text-sm font-medium text-gray-700 bg-white dark:bg-gray-800 rounded-xl border border-slate-200 hover:bg-gray-50 dark:hover:bg-gray-700">
               <EllipsisHorizontalIcon
@@ -45,6 +57,20 @@ const Header: React.FC<HeaderProps> = ({
             </Menu.Button>
             <Menu.Items className="absolute right-0 mt-2 w-56 origin-top-right divide-y divide-gray-100 rounded-md bg-white dark:bg-gray-800 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
               <div className="px-1 py-1">
+                <Menu.Item>
+                  {({ active }) => (
+                    <button
+                      onClick={() => setIsEditNameModalOpen(true)}
+                      className={`${
+                        active
+                          ? "bg-blue-500 text-white"
+                          : "text-gray-900 dark:text-gray-300"
+                      } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
+                    >
+                      Edit Name
+                    </button>
+                  )}
+                </Menu.Item>
                 <Menu.Item>
                   {({ active }) => (
                     <button
@@ -78,6 +104,12 @@ const Header: React.FC<HeaderProps> = ({
           </Menu>
         </div>
       </div>
+      <EditNameModal
+        isOpen={isEditNameModalOpen}
+        onClose={() => setIsEditNameModalOpen(false)}
+        onSave={handleUpdateUserName}
+        currentName={currentUser?.name || ""}
+      />
     </div>
   );
 };

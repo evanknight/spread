@@ -61,7 +61,10 @@ const GameList: React.FC<GameListProps> = ({
           />
         )}
         {weekGames.map((game) => {
-          const userPick = picks.find((pick) => pick.game_id === game.id);
+          const userPick = picks.find(
+            (pick) =>
+              pick.game_id === game.id && pick.user_id === currentUser?.id
+          );
           const homeTeamPicked = userPick?.team_picked === game.home_team.id;
           const awayTeamPicked = userPick?.team_picked === game.away_team.id;
 
@@ -74,50 +77,49 @@ const GameList: React.FC<GameListProps> = ({
                 <span className="text-sm text-gray-500 dark:text-gray-400">
                   {formatGameTime(game.commence_time)}
                 </span>
-                <span className="text-sm font-semibold dark:text-white">
+                <span className="text-sm text-gray-500 dark:text-gray-400">
                   Spread: {game.home_spread}
                 </span>
               </div>
               <div className="flex justify-between items-center">
                 <div className="flex items-center w-5/12">
-                  <img
-                    src={getTeamLogo(game.home_team.name)}
-                    alt={game.home_team.name}
-                    className="w-8 h-8 mr-2"
-                  />
-                  <span className="font-semibold dark:text-white">
-                    {game.home_team.name}
-                  </span>
-                </div>
-                <div className="w-2/12 text-center">
-                  <span className="text-sm font-semibold dark:text-white">
-                    vs
-                  </span>
-                </div>
-                <div className="flex items-center justify-end w-5/12">
-                  <span className="font-semibold dark:text-white">
-                    {game.away_team.name}
-                  </span>
-                  <img
+                  <Image
                     src={getTeamLogo(game.away_team.name)}
                     alt={game.away_team.name}
-                    className="w-8 h-8 ml-2"
+                    width={32}
+                    height={32}
+                    className="mr-2"
                   />
+                  <span className="dark:text-white">{game.away_team.name}</span>
+                </div>
+                <div className="w-2/12 text-center">
+                  <span className="text-sm dark:text-white">@</span>
+                </div>
+                <div className="flex items-center justify-end w-5/12">
+                  <Image
+                    src={getTeamLogo(game.home_team.name)}
+                    alt={game.home_team.name}
+                    width={32}
+                    height={32}
+                    className="mr-2"
+                  />
+                  <span className="dark:text-white">{game.home_team.name}</span>
                 </div>
               </div>
               <div className="flex justify-between mt-2">
-                {isCurrentWeek ? (
-                  <div className="w-full text-center text-gray-600 dark:text-gray-300">
-                    {homeTeamPicked &&
-                      `Locked ${getTeamNameOnly(
-                        game.home_team.name
-                      )} (${calculatePotentialPoints(game, true)}pt)`}
-                    {awayTeamPicked &&
-                      `Locked ${getTeamNameOnly(
-                        game.away_team.name
-                      )} (${calculatePotentialPoints(game, false)}pt)`}
-                    {!homeTeamPicked && !awayTeamPicked && "No pick made"}
-                  </div>
+                {new Date(game.commence_time) < new Date() ? (
+                  userPick && (
+                    <div className="w-full text-center text-gray-600 dark:text-gray-300">
+                      {homeTeamPicked &&
+                        `Locked ${getTeamNameOnly(
+                          game.home_team.name
+                        )} (${calculatePotentialPoints(game, true)}pt)`}
+                      {awayTeamPicked &&
+                        `Locked ${getTeamNameOnly(
+                          game.away_team.name
+                        )} (${calculatePotentialPoints(game, false)}pt)`}
+                    </div>
+                  )
                 ) : (
                   <>
                     <button
