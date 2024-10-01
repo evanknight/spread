@@ -94,7 +94,7 @@ export async function POST() {
           away_team_id: awayTeamData.id,
           home_spread: homeSpread,
           away_spread: awaySpread,
-          week: calculateNFLWeek(commenceTime),
+          week: calculateNFLWeek(),
           odds_api_id: game.id,
         });
 
