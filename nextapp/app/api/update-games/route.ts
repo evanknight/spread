@@ -55,7 +55,7 @@ export async function POST() {
         (m: any) => m.key === "spreads"
       );
 
-      if (!spreadsMarket) continue;
+      if (!spreadsMarket || !homeTeamData || !awayTeamData) continue;
 
       const homeSpread = spreadsMarket.outcomes.find(
         (o: { name: string }) => o.name === homeTeam
