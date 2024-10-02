@@ -1,19 +1,25 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { Game, User, Pick } from "@/types/types";
+import { getCurrentNFLWeek } from "./dateUtils";
 
 export const fetchGames = async (
-  supabase: SupabaseClient,
-  week: number
-): Promise<Game[]> => {
+  supabase: SupabaseClient
+): Promise<{ games: Game[]; currentWeek: number }> => {
   try {
+    const currentWeek = getCurrentNFLWeek();
     const { data, error } = await supabase
       .from("games")
       .select(
         "*, home_team:teams!home_team_id(*), away_team:teams!away_team_id(*)"
       )
-      .eq("week", week);
+      .order("commence_time", { ascending: true });
     if (error) throw error;
-    return data;
+
+    const games = data.filter((game) => game.week === currentWeek);
+
+    console.log("Fetched games:", games);
+    console.log("Current week:", currentWeek);
+    return { games, currentWeek };
   } catch (err) {
     console.error("Error fetching games:", err);
     throw err;
@@ -49,20 +55,12 @@ export const fetchPicks = async (
 };
 
 export const fetchGamesFromAPI = async (
-  supabase: SupabaseClient,
-  currentWeek: number
+  supabase: SupabaseClient
 ): Promise<Game[]> => {
   try {
-    const response = await fetch("/api/update-games", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ week: currentWeek }),
-    });
+    const response = await fetch("/api/update-games", { method: "POST" });
     if (!response.ok) {
       const errorData = await response.json();
-      console.error("API error details:", errorData);
       throw new Error(
         `Failed to fetch games from API: ${errorData.error}\nDetails: ${errorData.details}`
       );
@@ -71,29 +69,14 @@ export const fetchGamesFromAPI = async (
 
     console.log("API response:", result);
 
-    if (!Array.isArray(result)) {
-      console.error("API response is not an array:", result);
+    if (!result.games || !Array.isArray(result.games)) {
+      console.error("API response does not contain an array of games:", result);
       throw new Error("Invalid response format from API");
     }
 
-    return result;
+    return result.games;
   } catch (err) {
     console.error("Error fetching games from API:", err);
     throw err;
   }
 };
-
-export function calculateNFLWeek(): number {
-  // Hardcoded to return week 5 for now
-  return 5;
-}
-
-export function mapAPIWeekToNFLWeek(apiWeek: number): number {
-  // Assuming the API week starts at 14 for the first week of the NFL season
-  return apiWeek - 13;
-}
-
-export function mapNFLWeekToAPIWeek(nflWeek: number): number {
-  // Convert NFL week to API week
-  return nflWeek + 13;
-}

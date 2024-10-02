@@ -13,15 +13,13 @@ import {
   fetchUsers,
   fetchPicks,
   fetchGamesFromAPI,
-  calculateNFLWeek,
-  mapAPIWeekToNFLWeek,
-  mapNFLWeekToAPIWeek,
 } from "@/utils/dataFetchers";
 import {
   formatGameTime,
   getTeamLogo,
   calculatePotentialPoints,
-} from "@/utils/gameUtils";
+  getCurrentNFLWeek,
+} from "@/utils/dateUtils"; // Updated import
 import { ClipLoader } from "react-spinners";
 
 export default function Home() {
@@ -31,10 +29,7 @@ export default function Home() {
   const [picks, setPicks] = useState<Pick[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [currentNFLWeek, setCurrentNFLWeek] = useState(calculateNFLWeek());
-  const [currentAPIWeek, setCurrentAPIWeek] = useState(
-    mapNFLWeekToAPIWeek(calculateNFLWeek())
-  );
+  const [currentNFLWeek, setCurrentNFLWeek] = useState<number>(5);
 
   const router = useRouter();
 
@@ -120,11 +115,12 @@ export default function Home() {
     const loadData = async () => {
       setIsLoading(true);
       try {
-        const currentWeekGames = await fetchGames(supabase, currentAPIWeek);
-        setGames(currentWeekGames);
+        const { games: fetchedGames, currentWeek } = await fetchGames(supabase);
+        setGames(fetchedGames);
+        setCurrentNFLWeek(currentWeek);
         const usersData = await fetchUsers(supabase);
         setUsers(usersData);
-        const picksData = await fetchPicks(supabase, currentAPIWeek);
+        const picksData = await fetchPicks(supabase, currentWeek);
         setPicks(picksData);
       } catch (err) {
         console.error("Error loading data:", err);
@@ -135,7 +131,7 @@ export default function Home() {
     };
 
     loadData();
-  }, [currentAPIWeek]);
+  }, []);
 
   const handleMakePick = async (
     gameId: number,
@@ -184,7 +180,7 @@ export default function Home() {
             user_id: currentUser.id,
             game_id: gameId,
             team_picked: teamId,
-            week: currentAPIWeek,
+            week: currentNFLWeek,
             spread_at_time: spread,
           },
           { onConflict: "user_id,game_id" }
@@ -213,7 +209,7 @@ export default function Home() {
   const handleFetchGames = async () => {
     try {
       setIsLoading(true);
-      const fetchedGames = await fetchGamesFromAPI(supabase, currentAPIWeek);
+      const fetchedGames = await fetchGamesFromAPI(supabase);
       setGames(fetchedGames);
     } catch (err) {
       console.error("Error fetching games from API:", err);
@@ -249,7 +245,6 @@ export default function Home() {
             <Leaderboard users={users} />
             <WeekPicks
               currentWeek={currentNFLWeek}
-              apiWeek={currentAPIWeek}
               users={users}
               picks={picks}
               games={games}
@@ -267,7 +262,6 @@ export default function Home() {
               getTeamLogo={getTeamLogo}
               calculatePotentialPoints={calculatePotentialPoints}
               currentWeek={currentNFLWeek}
-              apiWeek={currentAPIWeek}
             />
           </div>
         </div>
@@ -275,7 +269,6 @@ export default function Home() {
           <h3 className="font-bold mb-1">Debug Info:</h3>
           <p>Number of games: {games.length}</p>
           <p>Current NFL Week: {currentNFLWeek}</p>
-          <p>Current API Week: {currentAPIWeek}</p>
         </div>
       </div>
     </div>

@@ -4,7 +4,6 @@ import { User, Pick, Game } from "@/types/types";
 
 interface WeekPicksProps {
   currentWeek: number;
-  apiWeek: number; // Add this prop
   users: User[];
   picks: Pick[];
   games: Game[];
@@ -14,18 +13,19 @@ interface WeekPicksProps {
 
 const WeekPicks: React.FC<WeekPicksProps> = ({
   currentWeek,
-  apiWeek, // Add this prop
   users,
   picks,
   games,
   getTeamLogo,
   calculatePotentialPoints,
 }) => {
-  const renderWeekPicks = () => (
-    <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-slate-200 dark:border-gray-700 mb-4">
-      <h3 className="text-lg font-semibold mb-2 dark:text-white">
+  const currentWeekPicks = picks.filter((pick) => pick.week === currentWeek);
+
+  return (
+    <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-4">
+      <h2 className="text-xl font-bold mb-4 dark:text-white">
         Week {currentWeek} Picks
-      </h3>
+      </h2>
       <table className="w-full">
         <thead>
           <tr>
@@ -42,19 +42,21 @@ const WeekPicks: React.FC<WeekPicksProps> = ({
         </thead>
         <tbody>
           {users.map((user, index) => {
-            const userPick = picks.find(
-              (p) => p.user_id === user.id && p.week === apiWeek // Use apiWeek here
+            const userPick = currentWeekPicks.find(
+              (pick) => pick.user_id === user.id
             );
-            const game = games.find((g) => g.id === userPick?.game_id);
+            const game = userPick
+              ? games.find((g) => g.id === userPick.game_id)
+              : null;
             const pickedTeam =
               userPick && game
-                ? userPick.team_picked === game.home_team.id
+                ? userPick.team_picked === game.home_team_id
                   ? game.home_team
                   : game.away_team
                 : null;
 
             return (
-              <React.Fragment key={`${user.id}-${apiWeek}`}>
+              <React.Fragment key={`${user.id}-${currentWeek}`}>
                 <tr>
                   <td className="py-2 text-sm dark:text-white">{user.name}</td>
                   {pickedTeam && game && userPick ? (
@@ -76,7 +78,7 @@ const WeekPicks: React.FC<WeekPicksProps> = ({
                       <td className="py-2 text-sm dark:text-white text-right pl-2">
                         {calculatePotentialPoints(
                           game,
-                          userPick.team_picked === game.home_team.id
+                          userPick.team_picked === game.home_team_id
                         )}
                         pts
                       </td>
@@ -84,7 +86,7 @@ const WeekPicks: React.FC<WeekPicksProps> = ({
                   ) : (
                     <>
                       <td className="py-2 text-sm dark:text-gray-400">
-                        No pick
+                        No pick yet
                       </td>
                       <td className="py-2 text-sm dark:text-gray-400 text-right pl-2">
                         -
@@ -107,8 +109,6 @@ const WeekPicks: React.FC<WeekPicksProps> = ({
       </table>
     </div>
   );
-
-  return renderWeekPicks();
 };
 
 export default WeekPicks;

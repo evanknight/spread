@@ -13,7 +13,6 @@ interface GameListProps {
   getTeamLogo: (teamName: string) => string;
   calculatePotentialPoints: (game: Game, isHomeTeam: boolean) => number;
   currentWeek: number;
-  apiWeek: number;
 }
 
 const GameList: React.FC<GameListProps> = ({
@@ -25,24 +24,28 @@ const GameList: React.FC<GameListProps> = ({
   getTeamLogo,
   calculatePotentialPoints,
   currentWeek,
-  apiWeek,
 }) => {
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
   const [selectedTeam, setSelectedTeam] = useState<"home" | "away" | null>(
     null
   );
 
+  // Filter games for the current week
+  const currentWeekGames = games.filter((game) => game.week === currentWeek);
+
   useEffect(() => {
     if (currentUser && picks.length > 0) {
       const userPick = picks.find(
-        (p) => p.user_id === currentUser.id && p.week === apiWeek
+        (p) => p.user_id === currentUser.id && p.week === currentWeek
       );
       if (userPick) {
-        const pickedGame = games.find((g) => g.id === userPick.game_id);
+        const pickedGame = currentWeekGames.find(
+          (g) => g.id === userPick.game_id
+        );
         if (pickedGame) {
           setSelectedGame(pickedGame);
           setSelectedTeam(
-            userPick.team_picked === pickedGame.home_team.id ? "home" : "away"
+            userPick.team_picked === pickedGame.home_team_id ? "home" : "away"
           );
         }
       } else {
@@ -50,7 +53,7 @@ const GameList: React.FC<GameListProps> = ({
         setSelectedTeam(null);
       }
     }
-  }, [currentUser, picks, games, apiWeek]);
+  }, [currentUser, picks, currentWeekGames, currentWeek]);
 
   const getFirstGameTime = (weekGames: Game[]): Date => {
     if (weekGames.length === 0) return new Date();
@@ -58,74 +61,71 @@ const GameList: React.FC<GameListProps> = ({
   };
 
   const handlePick = (game: Game, teamType: "home" | "away") => {
-    const teamId = teamType === "home" ? game.home_team.id : game.away_team.id;
-    makePick(game.id, teamId, apiWeek); // Use apiWeek instead of currentWeek
+    const teamId = teamType === "home" ? game.home_team_id : game.away_team_id;
+    makePick(game.id, teamId, currentWeek);
     setSelectedGame(game);
     setSelectedTeam(teamType);
   };
 
   const handleCancelPick = () => {
     if (selectedGame) {
-      makePick(selectedGame.id, 0, apiWeek); // Use apiWeek instead of currentWeek
+      makePick(selectedGame.id, 0, currentWeek);
       setSelectedGame(null);
       setSelectedTeam(null);
     }
   };
 
-  const renderTeamCard = (game: Game, isHome: boolean) => {
+  const renderTeamCard = (
+    game: Game,
+    isHome: boolean,
+    isSelected: boolean,
+    isDisabled: boolean
+  ) => {
+    const teamId = isHome ? game.home_team_id : game.away_team_id;
     const team = isHome ? game.home_team : game.away_team;
     const spread = isHome ? game.home_spread : game.away_spread;
     const points = calculatePotentialPoints(game, isHome);
-    const isPicked =
-      selectedGame?.id === game.id &&
-      ((isHome && selectedTeam === "home") ||
-        (!isHome && selectedTeam === "away"));
 
-    // Extract city name and team name
-    const nameParts = team.name.split(" ");
-    const teamName = nameParts.pop() || "";
-    const cityName = nameParts.join(" ");
+    const teamName = team?.name || `Team ${teamId}`;
+    let cityName = "";
+    if (team?.name) {
+      const nameParts = team.name.split(" ");
+      const teamNamePart = nameParts.pop() || "";
+      cityName = nameParts.join(" ");
+    }
 
     return (
       <div
         className={`relative bg-white dark:bg-gray-800 p-4 rounded-xl border ${
-          isPicked
+          isSelected
             ? "border-blue-500 dark:border-blue-400"
             : "border-gray-200 dark:border-gray-700"
-        } hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer group`}
-        onClick={() => handlePick(game, isHome ? "home" : "away")}
+        } ${
+          isDisabled
+            ? "opacity-50 cursor-not-allowed"
+            : "cursor-pointer hover:shadow-md transition-shadow"
+        }`}
+        onClick={() =>
+          !isDisabled && handlePick(game, isHome ? "home" : "away")
+        }
       >
-        {/* Lock Emoji on Hover (desktop only) */}
-        <div className="absolute bottom-2 right-2 hidden group-hover:block">
-          <FiLock className="text-gray-400" />
-        </div>
-
-        {/* Spread chip for mobile only */}
-        <span
-          className={`absolute top-2 right-2 px-2 py-1 text-sm rounded-full md:hidden ${
-            spread > 0
-              ? "bg-green-100 text-green-600 dark:bg-green-800 dark:text-green-100"
-              : "bg-red-100 text-red-600 dark:bg-red-800 dark:text-red-100"
-          }`}
-        >
-          {spread > 0 ? `+${spread}` : spread}
-        </span>
-
         <div className="flex md:flex-row flex-col md:items-center items-center justify-center md:justify-between">
           {/* Team logo and info (centered on mobile) */}
           <div className="flex items-center justify-center md:justify-start mb-2 md:mb-0">
             <Image
-              src={getTeamLogo(team.name)}
-              alt={team.name}
+              src={getTeamLogo(teamName)}
+              alt={teamName}
               width={48}
               height={48}
               className="mr-2"
             />
             <div className="text-center md:text-left">
               {/* Show city name on desktop only */}
-              <p className="text-sm text-gray-500 dark:text-gray-400 md:block hidden">
-                {cityName}
-              </p>
+              {cityName && (
+                <p className="text-sm text-gray-500 dark:text-gray-400 md:block hidden">
+                  {cityName}
+                </p>
+              )}
               <h3 className="text-lg font-bold dark:text-white">{teamName}</h3>
             </div>
           </div>
@@ -148,7 +148,16 @@ const GameList: React.FC<GameListProps> = ({
 
           {/* Spread chip and points (mobile layout, centered) */}
           <div className="md:hidden flex flex-col items-center">
-            <span className="text-xl font-bold dark:text-white">
+            <span
+              className={`px-2 py-1 text-sm rounded-full mb-1 ${
+                spread > 0
+                  ? "bg-green-100 text-green-600 dark:bg-green-800 dark:text-green-100"
+                  : "bg-red-100 text-red-600 dark:bg-red-800 dark:text-red-100"
+              }`}
+            >
+              {spread > 0 ? `+${spread}` : spread}
+            </span>
+            <span className="text-lg font-bold dark:text-white">
               {points} pts
             </span>
           </div>
@@ -159,10 +168,7 @@ const GameList: React.FC<GameListProps> = ({
 
   const renderGameCard = (game: Game) => {
     const isGameSelected = selectedGame?.id === game.id;
-
-    if (selectedGame && !isGameSelected) {
-      return null;
-    }
+    const isDisabled = selectedGame !== null && !isGameSelected;
 
     return (
       <div key={game.id} className="mb-8">
@@ -171,15 +177,14 @@ const GameList: React.FC<GameListProps> = ({
         </div>
 
         {isGameSelected ? (
-          <>
-            {renderTeamCard(game, selectedTeam === "home")}
-
-            {/* My Week # Lock inside the card */}
-            <div className="text-center mb-4 text-lg font-bold text-blue-500 flex items-center justify-center">
-              <FiLock className="mr-1" /> My Week {currentWeek} Lock
+          <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border ">
+            <div className="flex items-center justify-center mb-4">
+              <FiLock className="text-black-900 dark:text-white mr-2" />
+              <span className="text-xl font-bold">
+                My Week {currentWeek} Lock
+              </span>
             </div>
-
-            {/* Cancel pick button (inside the card) */}
+            {renderTeamCard(game, selectedTeam === "home", true, false)}
             <div className="text-center mt-4">
               <button
                 onClick={handleCancelPick}
@@ -188,14 +193,14 @@ const GameList: React.FC<GameListProps> = ({
                 Cancel Pick
               </button>
             </div>
-          </>
+          </div>
         ) : (
           <div className="grid grid-cols-[1fr,auto,1fr] gap-4 items-center">
-            {renderTeamCard(game, false)}
+            {renderTeamCard(game, false, false, isDisabled)}
             <span className="text-lg font-bold text-center dark:text-white">
               vs.
             </span>
-            {renderTeamCard(game, true)}
+            {renderTeamCard(game, true, false, isDisabled)}
           </div>
         )}
       </div>
@@ -210,12 +215,16 @@ const GameList: React.FC<GameListProps> = ({
         </h2>
         <div className="mt-2 md:mt-0">
           <WeekCountdown
-            firstGameTime={getFirstGameTime(games)}
+            firstGameTime={getFirstGameTime(currentWeekGames)}
             currentWeek={currentWeek}
           />
         </div>
       </div>
-      {games.map((game) => renderGameCard(game))}
+      {currentWeekGames.length === 0 ? (
+        <p>No games available for Week {currentWeek}.</p>
+      ) : (
+        currentWeekGames.map((game) => renderGameCard(game))
+      )}
     </>
   );
 };
