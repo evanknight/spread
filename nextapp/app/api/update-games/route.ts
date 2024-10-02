@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import axios from "axios";
 import { createClient } from "@supabase/supabase-js";
-import { calculateNFLWeek } from "@/utils/gameUtils";
+import { calculateNFLWeek } from "@/utils/dateUtils";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
