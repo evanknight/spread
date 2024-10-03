@@ -1,6 +1,6 @@
 import React from "react";
 import Image from "next/image";
-import { User, Pick, Game } from "@/types/types";
+import { User, Pick, Game } from "@/types";
 
 interface WeekPicksProps {
   currentWeek: number;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Game, User, Pick } from "@/types/types";
+import { Game, User, Pick } from "@/types";
 import WeekCountdown from "./WeekCountdown";
 import Image from "next/image";
 import { FiLock } from "react-icons/fi";
