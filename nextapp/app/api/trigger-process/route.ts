@@ -19,8 +19,9 @@ export async function GET() {
       );
     }
 
-    console.log("Processing triggered successfully");
-    return NextResponse.json({ message: "Processing triggered successfully" });
+    const result = await response.json();
+    console.log("Processing triggered successfully:", result);
+    return NextResponse.json(result);
   } catch (error) {
     console.error("Error in trigger-process route:", error);
     return NextResponse.json(

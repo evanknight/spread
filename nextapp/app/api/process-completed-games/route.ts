@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { calculatePotentialPoints } from "@/utils/dateUtils";
 
@@ -7,7 +7,7 @@ const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
-export async function POST() {
+async function processCompletedGames() {
   try {
     const { data: completedGames, error: gamesError } = await supabase
       .from("games")
@@ -49,7 +49,7 @@ export async function POST() {
         // Update pick
         const { error: updatePickError } = await supabase
           .from("picks")
-          .update({ did_win: didWin, points_earned: pointsEarned })
+          .update({ points_earned: pointsEarned })
           .eq("id", pick.id);
 
         if (updatePickError) {
@@ -90,9 +90,17 @@ export async function POST() {
       console.log(`Marked game ${game.id} as processed`);
     }
 
-    return NextResponse.json({
-      message: "Completed games processed successfully",
-    });
+    return { message: "Completed games processed successfully" };
+  } catch (error) {
+    console.error("Error processing completed games:", error);
+    throw error;
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const result = await processCompletedGames();
+    return NextResponse.json(result);
   } catch (error) {
     console.error("Error processing completed games:", error);
     return NextResponse.json(
@@ -100,4 +108,8 @@ export async function POST() {
       { status: 500 }
     );
   }
+}
+
+export async function POST(request: NextRequest) {
+  return GET(request);
 }
