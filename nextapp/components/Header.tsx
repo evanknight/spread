@@ -81,7 +81,7 @@ const Header: React.FC<HeaderProps> = ({
                           : "text-gray-900 dark:text-gray-300"
                       } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
                     >
-                      Fetch Games
+                      Fetch Latest Spread Data
                     </button>
                   )}
                 </Menu.Item>
