@@ -24,7 +24,10 @@ export async function GET() {
   } catch (error) {
     console.error("Error in trigger-process route:", error);
     return NextResponse.json(
-      { error: "Internal server error", details: error.message },
+      {
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
