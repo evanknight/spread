@@ -7,7 +7,7 @@ import GameList from "@/components/GameList";
 import Leaderboard from "@/components/Leaderboard";
 import WeekPicks from "@/components/WeekPicks";
 import { supabase } from "@/lib/supabase";
-import { Game, User, Pick } from "@/types/types";
+import { Game, User, Pick } from "@/types";
 import {
   fetchGames,
   fetchUsers,
