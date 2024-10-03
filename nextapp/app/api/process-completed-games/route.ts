@@ -41,15 +41,12 @@ async function processCompletedGames() {
             )
           : 0;
 
-        console.log(`Processing pick ${pick.id}:`, {
-          didWin,
-          pointsEarned,
-        });
+        console.log(`Processing pick ${pick.id}:`, { didWin, pointsEarned });
 
         // Update pick
         const { error: updatePickError } = await supabase
           .from("picks")
-          .update({ points_earned: pointsEarned })
+          .update({ points_earned: pointsEarned, did_win: didWin })
           .eq("id", pick.id);
 
         if (updatePickError) {
