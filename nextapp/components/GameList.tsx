@@ -126,7 +126,7 @@ const GameList: React.FC<GameListProps> = ({
               </p>
               <h3 className="text-lg font-bold dark:text-white">
                 <span className="lg:hidden">{shortTeamName}</span>
-                <span className="hidden lg:inline">{teamName}</span>
+                <span className="hidden lg:inline">{shortTeamName}</span>
               </h3>
             </div>
           </div>
