@@ -41,7 +41,7 @@ const GameList: React.FC<GameListProps> = ({
       );
       if (userPick) {
         const pickedGame = currentWeekGames.find(
-          (g) => g.id === userPick.game_id
+          (g) => g.id === userPick.game_id // Both are now numbers, no need for conversion
         );
         if (pickedGame) {
           setSelectedGame(pickedGame);

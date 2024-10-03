@@ -1,5 +1,5 @@
 export interface Game {
-  id: string;
+  id: number; // BIGINT in Postgres is represented as number in TypeScript
   sport_key: string;
   commence_time: string;
   home_team_id: number;
@@ -19,4 +19,5 @@ export interface Game {
 export interface Team {
   id: number;
   name: string;
+  logo_name?: string;
 }
