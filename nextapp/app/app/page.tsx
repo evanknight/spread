@@ -21,6 +21,7 @@ import {
   getCurrentNFLWeek,
 } from "@/utils/dateUtils"; // Updated import
 import { ClipLoader } from "react-spinners";
+import { Toaster } from "react-hot-toast";
 
 export default function Home() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -233,6 +234,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+      <Toaster />
       <Header
         currentUser={currentUser}
         signOut={signOut}

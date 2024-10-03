@@ -3,6 +3,7 @@ import { Game, User, Pick } from "@/types/types";
 import WeekCountdown from "./WeekCountdown";
 import Image from "next/image";
 import { FiLock } from "react-icons/fi";
+import toast from "react-hot-toast";
 
 interface GameListProps {
   games: Game[];
@@ -62,16 +63,30 @@ const GameList: React.FC<GameListProps> = ({
 
   const handlePick = (game: Game, teamType: "home" | "away") => {
     const teamId = teamType === "home" ? game.home_team_id : game.away_team_id;
+    const team = teamType === "home" ? game.home_team : game.away_team;
+    const teamName = team?.name || `Team ${teamId}`;
+    const points = calculatePotentialPoints(game, teamType === "home");
+
     makePick(game.id, teamId, currentWeek);
     setSelectedGame(game);
     setSelectedTeam(teamType);
+
+    // Show toast notification
+    toast.success(`${teamName} locked for ${points} points`, {
+      duration: 3000,
+      position: "bottom-center",
+    });
   };
 
   const handleCancelPick = () => {
     if (selectedGame) {
-      makePick(selectedGame.id, 0, currentWeek);
+      makePick(selectedGame.id, 0, currentWeek); // Use 0 as teamId to indicate cancellation
       setSelectedGame(null);
       setSelectedTeam(null);
+      toast.success("Pick cancelled", {
+        duration: 3000,
+        position: "bottom-center",
+      });
     }
   };
 
