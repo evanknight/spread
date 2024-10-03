@@ -11,13 +11,15 @@ export function calculateNFLWeek(date: Date): number {
 
 export function getCurrentNFLWeek(): number {
   const now = new Date();
-  
+
   // Hardcode the start of Week 5 (adjust this date as needed)
-  const week5Start = new Date('2024-10-01T00:00:00Z');
-  
+  const week5Start = new Date("2024-10-01T00:00:00Z");
+
   // Calculate the difference in weeks
-  const weeksDiff = Math.floor((now.getTime() - week5Start.getTime()) / (7 * 24 * 60 * 60 * 1000));
-  
+  const weeksDiff = Math.floor(
+    (now.getTime() - week5Start.getTime()) / (7 * 24 * 60 * 60 * 1000)
+  );
+
   // Add 5 to start from Week 5
   const currentWeek = 5 + weeksDiff;
 
@@ -31,9 +33,6 @@ export function getCurrentNFLWeek(): number {
   }
 
   return Math.min(currentWeek, 18); // Clamp to maximum of Week 18
-}
-
-  return currentWeek;
 }
 
 export function getWeekStartDate(week: number): Date {
