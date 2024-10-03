@@ -1,5 +1,5 @@
 import { SupabaseClient } from "@supabase/supabase-js";
-import { User } from "@/types/types";
+import { User } from "@/types";
 
 export const fetchUsers = async (
   supabase: SupabaseClient,

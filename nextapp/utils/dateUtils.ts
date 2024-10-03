@@ -1,4 +1,4 @@
-import { Game } from "@/types/types";
+import { Game } from "@/types";
 
 export function calculateNFLWeek(date: Date): number {
   const seasonStart = new Date("2024-09-05T00:20:00Z"); // NFL 2024 season start (Thursday 8:20 PM ET)

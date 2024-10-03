@@ -1,5 +1,5 @@
 import { SupabaseClient } from "@supabase/supabase-js";
-import { Pick } from "@/types/types";
+import { Pick } from "@/types";
 
 export const fetchPicks = async (
   supabase: SupabaseClient,
