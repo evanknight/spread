@@ -97,17 +97,23 @@ const GameList: React.FC<GameListProps> = ({
 
     return (
       <div
-        className={`relative bg-white dark:bg-gray-800 p-4 rounded-xl border ${
+        className={`relative bg-white dark:bg-gray-800 p-4 rounded-xl ${
           isSelected
-            ? "border-blue-500 dark:border-blue-400"
-            : "border-gray-200 dark:border-gray-700"
+            ? "border border-blue-500 dark:border-blue-400"
+            : isDisabled
+            ? "border-transparent"
+            : "border border-gray-200 dark:border-gray-700"
         } ${
           isDisabled
             ? "opacity-50 cursor-not-allowed"
+            : isSelected
+            ? "cursor-default"
             : "cursor-pointer hover:shadow-md transition-shadow"
         }`}
         onClick={() =>
-          !isDisabled && handlePick(game, isHome ? "home" : "away")
+          !isDisabled &&
+          !isSelected &&
+          handlePick(game, isHome ? "home" : "away")
         }
       >
         <div className="flex lg:flex-row flex-col lg:items-center items-center justify-center lg:justify-between">
@@ -126,29 +132,13 @@ const GameList: React.FC<GameListProps> = ({
               </p>
               <h3 className="text-lg font-bold dark:text-white">
                 <span className="lg:hidden">{shortTeamName}</span>
-                <span className="hidden lg:inline">{shortTeamName}</span>
+                <span className="hidden lg:inline">{teamName}</span>
               </h3>
             </div>
           </div>
 
-          {/* Spread chip and points (desktop layout) */}
-          <div className="hidden lg:flex items-center space-x-2">
-            <span
-              className={`px-2 py-1 text-sm rounded-full ${
-                spread > 0
-                  ? "bg-green-100 text-green-600 dark:bg-green-800 dark:text-green-100"
-                  : "bg-red-100 text-red-600 dark:bg-red-800 dark:text-red-100"
-              }`}
-            >
-              {spread > 0 ? `+${spread}` : spread}
-            </span>
-            <span className="text-lg font-bold dark:text-white">
-              {points} pts
-            </span>
-          </div>
-
-          {/* Spread chip and points (mobile layout, centered) */}
-          <div className="lg:hidden flex flex-col items-center mt-2">
+          {/* Spread chip and points */}
+          <div className="flex flex-col items-center lg:items-end mt-2 lg:mt-0">
             <span
               className={`px-2 py-1 text-sm rounded-full mb-1 ${
                 spread > 0
@@ -171,6 +161,15 @@ const GameList: React.FC<GameListProps> = ({
     const isGameSelected = selectedGame?.id === game.id;
     const isDisabled = selectedGame !== null && !isGameSelected;
 
+    const getSelectedTeamName = () => {
+      if (selectedTeam === "home") {
+        return game.home_team?.name || "Home Team";
+      } else if (selectedTeam === "away") {
+        return game.away_team?.name || "Away Team";
+      }
+      return "";
+    };
+
     return (
       <div key={game.id} className="mb-8">
         <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">
@@ -178,14 +177,31 @@ const GameList: React.FC<GameListProps> = ({
         </div>
 
         {isGameSelected ? (
-          <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border ">
+          <div className="bg-white dark:bg-gray-800 p-4 rounded-xl ">
             <div className="flex items-center justify-center mb-4">
-              <FiLock className="text-black-900 dark:text-white mr-2" />
-              <span className="text-xl font-bold">
-                My Week {currentWeek} Lock
+              <FiLock className="text-black dark:text-white mr-2" />
+              <span className="text-lg font-medium text-black dark:text-white">
+                My Week {currentWeek} Lock:
+                <span className="font-bold"> {getSelectedTeamName()}</span>
               </span>
             </div>
-            {renderTeamCard(game, selectedTeam === "home", true, false)}
+            <div className="grid grid-cols-[1fr,auto,1fr] gap-4 items-center">
+              {renderTeamCard(
+                game,
+                false,
+                selectedTeam === "away",
+                selectedTeam !== "away"
+              )}
+              <span className="text-lg font-bold text-center dark:text-white">
+                vs.
+              </span>
+              {renderTeamCard(
+                game,
+                true,
+                selectedTeam === "home",
+                selectedTeam !== "home"
+              )}
+            </div>
             <div className="text-center mt-4">
               <button
                 onClick={handleCancelPick}
