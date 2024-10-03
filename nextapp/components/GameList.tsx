@@ -163,7 +163,7 @@ const GameList: React.FC<GameListProps> = ({
             >
               {spread > 0 ? `+${spread}` : spread}
             </span>
-            <span className="text-lg font-bold dark:text-white">
+            <span className="text-lg font-regular dark:text-white">
               {points} pts
             </span>
           </div>

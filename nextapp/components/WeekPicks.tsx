@@ -80,7 +80,6 @@ const WeekPicks: React.FC<WeekPicksProps> = ({
                           game,
                           userPick.team_picked === game.home_team_id
                         )}
-                        pts
                       </td>
                     </>
                   ) : (

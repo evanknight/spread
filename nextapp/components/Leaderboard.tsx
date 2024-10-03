@@ -19,6 +19,8 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users }) => {
             <th className="pb-2">Rank</th>
             <th className="pb-2">Name</th>
             <th className="pb-2 text-right">Points</th>
+            <th className="pb-2 text-right">Record</th>
+            <th className="pb-2 text-right">Streak</th>
           </tr>
         </thead>
         <tbody>
@@ -31,6 +33,12 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ users }) => {
               <td className="py-2 text-sm dark:text-white">{user.name}</td>
               <td className="py-2 text-right text-sm dark:text-white">
                 {user.total_points}
+              </td>
+              <td className="py-2 text-right text-sm dark:text-white">
+                {user.record}
+              </td>
+              <td className="py-2 text-right text-sm dark:text-white">
+                {user.streak}
               </td>
             </tr>
           ))}

@@ -18,6 +18,8 @@ async function processCompletedGames() {
     if (gamesError) throw gamesError;
     console.log("Completed games to process:", completedGames);
 
+    const updatedUsers = new Set();
+
     for (const game of completedGames) {
       const { data: picks, error: picksError } = await supabase
         .from("picks")
@@ -41,10 +43,7 @@ async function processCompletedGames() {
             )
           : 0;
 
-        console.log(`Processing pick ${pick.id}:`, {
-          didWin,
-          pointsEarned,
-        });
+        console.log(`Processing pick ${pick.id}:`, { didWin, pointsEarned });
 
         // Update pick
         const { error: updatePickError } = await supabase
@@ -57,23 +56,7 @@ async function processCompletedGames() {
           throw updatePickError;
         }
 
-        // Update user's total points
-        const { error: updateUserError } = await supabase.rpc(
-          "increment_user_points",
-          {
-            user_id: pick.user_id,
-            points: pointsEarned,
-          }
-        );
-
-        if (updateUserError) {
-          console.error("Error updating user points:", updateUserError);
-          throw updateUserError;
-        }
-
-        console.log(
-          `Updated points for user ${pick.user_id}: +${pointsEarned}`
-        );
+        updatedUsers.add(pick.user_id);
       }
 
       // Mark game as processed
@@ -90,6 +73,21 @@ async function processCompletedGames() {
       console.log(`Marked game ${game.id} as processed`);
     }
 
+    // Recalculate points for all updated users
+    for (const userId of updatedUsers) {
+      const { error: recalculateError } = await supabase.rpc(
+        "recalculate_user_points",
+        { user_id: userId }
+      );
+
+      if (recalculateError) {
+        console.error("Error recalculating user points:", recalculateError);
+        throw recalculateError;
+      }
+
+      console.log(`Recalculated points for user ${userId}`);
+    }
+
     return { message: "Completed games processed successfully" };
   } catch (error) {
     console.error("Error processing completed games:", error);
@@ -104,7 +102,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Error processing completed games:", error);
     return NextResponse.json(
-      { error: "Failed to process completed games" },
+      { error: "Failed to process completed games", details: error.message },
       { status: 500 }
     );
   }
