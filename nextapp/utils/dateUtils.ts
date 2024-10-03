@@ -81,7 +81,7 @@ export const calculatePotentialPoints = (
 ): number => {
   const basePoints = 10;
   const spread = isHomeTeam ? game.home_spread : -game.home_spread;
-  return Math.round(basePoints + spread);
+  return +(basePoints + spread).toFixed(1); // Keep one decimal place
 };
 
 // For testing purposes
