@@ -240,8 +240,8 @@ export default function Home() {
         updateUserName={updateUserName}
       />
       <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col md:flex-row gap-8">
-          <div className="w-full md:w-1/3 order-1 md:order-1 space-y-4">
+        <div className="flex flex-col xl:flex-row gap-8">
+          <div className="w-full xl:w-1/3 order-1 xl:order-1 space-y-4">
             <Leaderboard users={users} />
             <WeekPicks
               currentWeek={currentNFLWeek}
@@ -252,7 +252,7 @@ export default function Home() {
               calculatePotentialPoints={calculatePotentialPoints}
             />
           </div>
-          <div className="w-full md:w-2/3 order-2 md:order-2">
+          <div className="w-full xl:w-2/3 order-2 xl:order-2">
             <GameList
               games={games}
               picks={picks}

@@ -88,9 +88,10 @@ const GameList: React.FC<GameListProps> = ({
 
     const teamName = team?.name || `Team ${teamId}`;
     let cityName = "";
+    let shortTeamName = teamName;
     if (team?.name) {
       const nameParts = team.name.split(" ");
-      const teamNamePart = nameParts.pop() || "";
+      shortTeamName = nameParts.pop() || "";
       cityName = nameParts.join(" ");
     }
 
@@ -109,29 +110,29 @@ const GameList: React.FC<GameListProps> = ({
           !isDisabled && handlePick(game, isHome ? "home" : "away")
         }
       >
-        <div className="flex md:flex-row flex-col md:items-center items-center justify-center md:justify-between">
-          {/* Team logo and info (centered on mobile) */}
-          <div className="flex items-center justify-center md:justify-start mb-2 md:mb-0">
+        <div className="flex lg:flex-row flex-col lg:items-center items-center justify-center lg:justify-between">
+          {/* Team logo and info (centered and stacked on mobile, side by side on desktop) */}
+          <div className="flex lg:flex-row flex-col items-center lg:justify-start mb-2 lg:mb-0">
             <Image
               src={getTeamLogo(teamName)}
               alt={teamName}
               width={48}
               height={48}
-              className="mr-2"
+              className="lg:mr-2 mb-2 lg:mb-0"
             />
-            <div className="text-center md:text-left">
-              {/* Show city name on desktop only */}
-              {cityName && (
-                <p className="text-sm text-gray-500 dark:text-gray-400 md:block hidden">
-                  {cityName}
-                </p>
-              )}
-              <h3 className="text-lg font-bold dark:text-white">{teamName}</h3>
+            <div className="text-center lg:text-left">
+              <p className="text-sm text-gray-500 dark:text-gray-400 lg:block hidden">
+                {cityName}
+              </p>
+              <h3 className="text-lg font-bold dark:text-white">
+                <span className="lg:hidden">{shortTeamName}</span>
+                <span className="hidden lg:inline">{teamName}</span>
+              </h3>
             </div>
           </div>
 
           {/* Spread chip and points (desktop layout) */}
-          <div className="hidden md:flex items-center space-x-2">
+          <div className="hidden lg:flex items-center space-x-2">
             <span
               className={`px-2 py-1 text-sm rounded-full ${
                 spread > 0
@@ -147,7 +148,7 @@ const GameList: React.FC<GameListProps> = ({
           </div>
 
           {/* Spread chip and points (mobile layout, centered) */}
-          <div className="md:hidden flex flex-col items-center">
+          <div className="lg:hidden flex flex-col items-center mt-2">
             <span
               className={`px-2 py-1 text-sm rounded-full mb-1 ${
                 spread > 0
