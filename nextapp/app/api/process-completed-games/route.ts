@@ -18,7 +18,7 @@ async function processCompletedGames() {
     if (gamesError) throw gamesError;
     console.log("Completed games to process:", completedGames);
 
-    const updatedUsers = new Set();
+    const updatedUsers: string[] = [];
 
     for (const game of completedGames) {
       const { data: picks, error: picksError } = await supabase
@@ -56,7 +56,9 @@ async function processCompletedGames() {
           throw updatePickError;
         }
 
-        updatedUsers.add(pick.user_id);
+        if (!updatedUsers.includes(pick.user_id)) {
+          updatedUsers.push(pick.user_id);
+        }
       }
 
       // Mark game as processed
@@ -77,7 +79,7 @@ async function processCompletedGames() {
     for (const userId of updatedUsers) {
       const { error: recalculateError } = await supabase.rpc(
         "recalculate_user_points",
-        { user_id: userId }
+        { input_user_id: userId }
       );
 
       if (recalculateError) {
