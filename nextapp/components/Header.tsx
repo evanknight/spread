@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Menu } from "@headlessui/react";
 import { EllipsisHorizontalIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
-import { User } from "@/types/types";
+import { User } from "@/types";
 import EditNameModal from "./EditNameModal";
 
 interface HeaderProps {
