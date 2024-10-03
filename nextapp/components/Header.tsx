@@ -46,7 +46,7 @@ const Header: React.FC<HeaderProps> = ({
         </div>
         <div className="flex items-center space-x-4">
           {currentUser && (
-            <span className="dark:text-white">Welcome, {currentUser.name}</span>
+            <span className="dark:text-white text-sm">{currentUser.name}</span>
           )}
           <Menu as="div" className="relative inline-block text-left">
             <Menu.Button className="inline-flex justify-center w-full px-4 py-2 text-sm font-medium text-gray-700 bg-white dark:bg-gray-800 rounded-xl border border-slate-200 hover:bg-gray-50 dark:hover:bg-gray-700">

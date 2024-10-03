@@ -1,5 +1,6 @@
+import fetch from "node-fetch";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
-import { Game, User, Pick } from "@/types/types";
+import { Game, User, Pick } from "@/types";
 import { getCurrentNFLWeek } from "./dateUtils";
 
 export const fetchGames = async (
@@ -58,7 +59,10 @@ export const fetchGamesFromAPI = async (
   supabase: SupabaseClient
 ): Promise<Game[]> => {
   try {
-    const response = await fetch("/api/update-games", { method: "POST" });
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+    const response = await fetch(`${baseUrl}/api/update-games`, {
+      method: "POST",
+    });
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(
@@ -74,7 +78,26 @@ export const fetchGamesFromAPI = async (
       throw new Error("Invalid response format from API");
     }
 
-    return result.games;
+    // Process completed games after fetching new data
+    const processResponse = await fetch(
+      `${baseUrl}/api/process-completed-games`,
+      { method: "POST" }
+    );
+    if (!processResponse.ok) {
+      console.error("Failed to process completed games");
+    }
+
+    // Fetch updated games after processing
+    const { data: updatedGames, error } = await supabase
+      .from("games")
+      .select(
+        "*, home_team:teams!home_team_id(*), away_team:teams!away_team_id(*)"
+      )
+      .order("commence_time", { ascending: true });
+
+    if (error) throw error;
+
+    return updatedGames;
   } catch (err) {
     console.error("Error fetching games from API:", err);
     throw err;

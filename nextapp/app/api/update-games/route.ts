@@ -6,6 +6,7 @@ import { calculateNFLWeek } from "@/utils/dateUtils";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const oddsApiKey = process.env.NEXT_PUBLIC_ODDS_API_KEY!;
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
 const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
@@ -66,7 +67,7 @@ export async function POST() {
 
       if (homeSpread === undefined || awaySpread === undefined) continue;
 
-      updatedGames.push({
+      const gameData = {
         sport_key: sportKey,
         commence_time: commenceTime.toISOString(),
         home_team_id: homeTeamData.id,
@@ -75,7 +76,13 @@ export async function POST() {
         away_spread: awaySpread,
         week: nflWeek,
         odds_api_id: game.id,
-      });
+        completed: game.completed || false,
+        home_score: game.scores?.[0]?.score || null,
+        away_score: game.scores?.[1]?.score || null,
+        processed: false,
+      };
+
+      updatedGames.push(gameData);
     }
 
     const { error } = await supabase.from("games").upsert(updatedGames, {
@@ -83,6 +90,9 @@ export async function POST() {
     });
 
     if (error) throw error;
+
+    // Process completed games
+    await fetch(`${baseUrl}/api/process-completed-games`, { method: "POST" });
 
     return NextResponse.json({
       message: "Games updated successfully",
