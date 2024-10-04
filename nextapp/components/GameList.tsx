@@ -30,6 +30,7 @@ const GameList: React.FC<GameListProps> = ({
   const [selectedTeam, setSelectedTeam] = useState<"home" | "away" | null>(
     null
   );
+  const [isWeekInProgress, setIsWeekInProgress] = useState<boolean>(false);
 
   // Filter games for the current week
   const currentWeekGames = games.filter((game) => game.week === currentWeek);
@@ -41,7 +42,7 @@ const GameList: React.FC<GameListProps> = ({
       );
       if (userPick) {
         const pickedGame = currentWeekGames.find(
-          (g) => g.id === userPick.game_id // Both are now numbers, no need for conversion
+          (g) => g.id === userPick.game_id
         );
         if (pickedGame) {
           setSelectedGame(pickedGame);
@@ -61,7 +62,15 @@ const GameList: React.FC<GameListProps> = ({
     return new Date(weekGames[0].commence_time);
   };
 
+  useEffect(() => {
+    const firstGameTime = getFirstGameTime(currentWeekGames);
+    const now = new Date();
+    setIsWeekInProgress(now > firstGameTime);
+  }, [currentWeekGames]);
+
   const handlePick = (game: Game, teamType: "home" | "away") => {
+    if (isWeekInProgress) return; // Prevent picks when week is in progress
+
     const teamId = teamType === "home" ? game.home_team_id : game.away_team_id;
     const team = teamType === "home" ? game.home_team : game.away_team;
     const teamName = team?.name || `Team ${teamId}`;
@@ -79,6 +88,8 @@ const GameList: React.FC<GameListProps> = ({
   };
 
   const handleCancelPick = () => {
+    if (isWeekInProgress) return; // Prevent cancelling when week is in progress
+
     if (selectedGame) {
       makePick(selectedGame.id, 0, currentWeek); // Use 0 as teamId to indicate cancellation
       setSelectedGame(null);
@@ -115,11 +126,11 @@ const GameList: React.FC<GameListProps> = ({
         className={`relative bg-white dark:bg-gray-800 p-4 rounded-xl ${
           isSelected
             ? "border border-blue-500 dark:border-blue-400"
-            : isDisabled
+            : isDisabled || isWeekInProgress
             ? "border-transparent"
             : "border border-gray-200 dark:border-gray-700"
         } ${
-          isDisabled
+          isDisabled || isWeekInProgress
             ? "opacity-50 cursor-not-allowed"
             : isSelected
             ? "cursor-default"
@@ -128,6 +139,7 @@ const GameList: React.FC<GameListProps> = ({
         onClick={() =>
           !isDisabled &&
           !isSelected &&
+          !isWeekInProgress &&
           handlePick(game, isHome ? "home" : "away")
         }
       >
@@ -217,14 +229,16 @@ const GameList: React.FC<GameListProps> = ({
                 selectedTeam !== "home"
               )}
             </div>
-            <div className="text-center mt-4">
-              <button
-                onClick={handleCancelPick}
-                className="bg-red-500 text-white py-2 px-4 rounded-xl hover:bg-red-600 transition-colors"
-              >
-                Cancel Pick
-              </button>
-            </div>
+            {!isWeekInProgress && (
+              <div className="text-center mt-4">
+                <button
+                  onClick={handleCancelPick}
+                  className="bg-red-500 text-white py-2 px-4 rounded-xl hover:bg-red-600 transition-colors"
+                >
+                  Cancel Pick
+                </button>
+              </div>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-[1fr,auto,1fr] gap-4 items-center">
