@@ -59,8 +59,9 @@ export const fetchGamesFromAPI = async (
   supabase: SupabaseClient
 ): Promise<Game[]> => {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
-    const response = await fetch(`${baseUrl}/api/update-games`, {
+    const apiBaseUrl =
+      process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000";
+    const response = await fetch(`${apiBaseUrl}/api/update-games`, {
       method: "POST",
     });
     if (!response.ok) {
@@ -80,7 +81,7 @@ export const fetchGamesFromAPI = async (
 
     // Process completed games after fetching new data
     const processResponse = await fetch(
-      `${baseUrl}/api/process-completed-games`,
+      `${apiBaseUrl}/api/process-completed-games`,
       { method: "POST" }
     );
     if (!processResponse.ok) {

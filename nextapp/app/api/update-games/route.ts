@@ -7,6 +7,8 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const oddsApiKey = process.env.NEXT_PUBLIC_ODDS_API_KEY!;
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+const apiBaseUrl =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000";
 
 const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
@@ -92,7 +94,9 @@ export async function POST() {
     if (error) throw error;
 
     // Process completed games
-    await fetch(`${baseUrl}/api/process-completed-games`, { method: "POST" });
+    await fetch(`${apiBaseUrl}/api/process-completed-games`, {
+      method: "POST",
+    });
 
     return NextResponse.json({
       message: "Games updated successfully",
