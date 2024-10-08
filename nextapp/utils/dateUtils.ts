@@ -11,28 +11,27 @@ export function calculateNFLWeek(date: Date): number {
 
 export function getCurrentNFLWeek(): number {
   const now = new Date();
-
-  // Hardcode the start of Week 5 (adjust this date as needed)
-  const week5Start = new Date("2024-10-01T00:00:00Z");
+  const seasonStart = new Date("2024-09-05T00:20:00Z"); // NFL 2024 season start (Thursday 8:20 PM ET)
 
   // Calculate the difference in weeks
   const weeksDiff = Math.floor(
-    (now.getTime() - week5Start.getTime()) / (7 * 24 * 60 * 60 * 1000)
+    (now.getTime() - seasonStart.getTime()) / (7 * 24 * 60 * 60 * 1000)
   );
 
-  // Add 5 to start from Week 5
-  const currentWeek = 5 + weeksDiff;
+  // Add 1 to start from Week 1
+  let currentWeek = weeksDiff + 1;
 
-  // Check if it's Tuesday 12:00 AM or later
+  // Check if it's Tuesday 12:00 AM ET or later
   const dayOfWeek = now.getUTCDay(); // 0 is Sunday, 1 is Monday, 2 is Tuesday
   const hours = now.getUTCHours();
 
-  if (dayOfWeek === 2 && hours >= 0) {
-    // It's Tuesday 12:00 AM or later, so we're in the next week
-    return Math.min(currentWeek + 1, 18);
+  if (dayOfWeek === 2 && hours >= 4) {
+    // 4 AM UTC is 12 AM ET
+    // It's Tuesday 12:00 AM ET or later, so we're in the next week
+    currentWeek += 1;
   }
 
-  return Math.min(currentWeek, 18); // Clamp to maximum of Week 18
+  return Math.min(Math.max(currentWeek, 1), 18); // Clamp between 1 and 18
 }
 
 export function getWeekStartDate(week: number): Date {
