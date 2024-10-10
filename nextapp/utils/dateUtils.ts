@@ -32,7 +32,7 @@ export function getCurrentNFLWeek(): number {
   let currentWeek = Math.floor(daysSinceStart / 7) + 1;
 
   // Adjust for the week change on Tuesday
-  const dayOfWeek = now.getUTCDay(); // 0 is Sunday, 1 is Monday, 2 is Tuesday
+  const dayOfWeek = now.getUTCDay(); // 0 is Siun, 1 is Monday, 2 is Tuesday
   const hours = now.getUTCHours();
 
   if (dayOfWeek === 2 && hours >= 4) {
