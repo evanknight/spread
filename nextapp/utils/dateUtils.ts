@@ -2,12 +2,12 @@ import { Game } from "@/types";
 
 export function calculateNFLWeek(date: Date): number {
   // For now, always return Week 6
-  return 10;
+  return 11;
 }
 
 export function getCurrentNFLWeek(): number {
   // Manually set to Week 6
-  return 10;
+  return 11;
 }
 
 export function getWeekStartDate(week: number): Date {
